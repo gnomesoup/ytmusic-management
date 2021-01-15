@@ -4,7 +4,7 @@ ytmusic = YTMusic("headers_auth.json")
 # libraryPlaylists = ytmusic.get_library_playlists()
 # for playlist in libraryPlaylists:
 #     print(playlist['title'], playlist['playlistId'])
-playlistId = "PLJpUfuX6t6dQdLW_mPfm69Ar-cOmkq2Wq"
+playlistId = "playlistId"
 
 playlistTrackCount = ytmusic.get_playlist(playlistId,)['trackCount']
 playlistTrackCount = 10
