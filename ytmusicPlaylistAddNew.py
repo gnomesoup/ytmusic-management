@@ -5,18 +5,20 @@ playlistTitle = "TITLE"
 playlistDescription = ""
 playlistPrivacyStatus = "PUBLIC"
 
-songsToAdd = ["artist song title"]
+songsToAdd = [
+"Artist Song Name"
+]
 
 videoIds = []
 for song in songsToAdd:
     songSearch = ytmusic.search(song, "songs")
     print("Search Term:", song)
     if not songSearch:
-        print("Return: None\n")
+        print("   Returned: None\n")
     else:
         firstSong = songSearch[0]
         videoIds.append(firstSong['videoId'])
-        print("Return:", firstSong['title'], "-", firstSong['artists'][0]['name'], "\n")
+        print("   Returned:", firstSong['title'], "-", firstSong['artists'][0]['name'], "\n")
 
 newPlaylist = ytmusic.create_playlist(
     playlistTitle,
@@ -24,4 +26,6 @@ newPlaylist = ytmusic.create_playlist(
     playlistPrivacyStatus,
     videoIds)
 
-print(newPlaylist)
+print("playlistId:", newPlaylist)
+print("Searched", len(songsToAdd), "songs")
+print("YTMusic matched", len(videoIds), "songs")

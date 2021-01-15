@@ -40,11 +40,11 @@ for song in reversed(uniqueSongsToAdd):
     songSearch = ytmusic.search(song, "songs")
     print("Search Term:", song)
     if not songSearch:
-        print("Return: None\n")
+        print("   Returned: None\n")
     else:
         firstSong = songSearch[0]
         videoIds.append(firstSong['videoId'])
-        print("Return:", firstSong['artists'][0]['name'], "-", firstSong['title'], "\n")
+        print("   Returned:", firstSong['artists'][0]['name'], "-", firstSong['title'], "\n")
 
 newPlaylist = ytmusic.create_playlist(
     playlistTitle,
