@@ -1,7 +1,5 @@
 # from requests import Request, Session
 import requests
-import lxml.html
-# import pandas
 from ytmusicapi import YTMusic
 
 date = "2021-01-14"

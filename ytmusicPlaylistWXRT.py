@@ -1,6 +1,5 @@
 from requests import get
 import lxml.html
-# import pandas
 from ytmusicapi import YTMusic
 
 year = "2021"
