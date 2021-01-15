@@ -30,7 +30,7 @@ for song in reversed(uniqueSongsToAdd):
     if not songSearch:
         print("Return: None\n")
     else:
- k       firstSong = songSearch[0]
+        firstSong = songSearch[0]
         videoIds.append(firstSong['videoId'])
         print("Return:", firstSong['artists'][0]['name'], "-", firstSong['title'], "\n")
 
