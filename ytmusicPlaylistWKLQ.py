@@ -54,4 +54,7 @@ newPlaylist = ytmusic.create_playlist(
     playlistPrivacyStatus,
     videoIds)
 
-print(newPlaylist)
+print("playlistId:", newPlaylist)
+print("Found", len(songsToAdd), "songs")
+print(len(uniqueSongsToAdd), "songs were unique")
+print("YTMusic matched", len(videoIds), "songs")
