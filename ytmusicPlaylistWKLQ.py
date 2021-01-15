@@ -33,7 +33,7 @@ lis = doc.xpath('//li[contains(@class, "slot lt")]')
 songsToAdd = []
 for song in songList:
     searchTerm = (song['artist'] + " " + song['song'])
-    songsToAdd.append(song)
+    songsToAdd.append(searchTerm)
 
 uniqueSongsToAdd = list(set(songsToAdd))
 
@@ -46,7 +46,7 @@ for song in reversed(uniqueSongsToAdd):
     else:
         firstSong = songSearch[0]
         videoIds.append(firstSong['videoId'])
-        print("Return:", firstSong['title'], "-", firstSong['artists'][0]['name'], "\n")
+        print("Return:", firstSong['artists'][0]['name'], "-", firstSong['title'], "\n")
 
 newPlaylist = ytmusic.create_playlist(
     playlistTitle,
