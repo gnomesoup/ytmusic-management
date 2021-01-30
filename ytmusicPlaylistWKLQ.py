@@ -2,7 +2,7 @@
 import requests
 from ytmusicapi import YTMusic
 
-date = "2021-01-14"
+date = "2021-01-15"
 url = "http://wklq.tunegenie.com/api/v1/brand/nowplaying/?" +\
     "hour=0&since=" +\
     date + "T00%3A00%3A00-05%3A00&until=" +\
@@ -23,10 +23,6 @@ ytmusic = YTMusic("headers_auth.json")
 playlistTitle = "WKLQ Playlist from " + date
 playlistDescription = ""
 playlistPrivacyStatus = "PUBLIC"
-
-page = requests.get(url)
-doc = lxml.html.fromstring(page.content)
-lis = doc.xpath('//li[contains(@class, "slot lt")]')
 
 songsToAdd = []
 for song in songList:
