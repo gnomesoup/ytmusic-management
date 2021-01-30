@@ -2,3 +2,4 @@
 .venv
 .vscode
 headers_auth.json
+*.code-workspace
