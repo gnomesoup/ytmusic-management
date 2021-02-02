@@ -22,13 +22,12 @@ for tr in reversed(trs[5:]):
 
 songsToAdd = []
 for song in songList:
-    if re.match("(9|10):\d\d\sAM",song[0]):
+    if re.match("(9|10|11):\d\d\sAM",song[0]):
         songsToAdd.append(song[1])
-uniqueSongsToAdd = list(set(songsToAdd))
 
 videoIds = []
 years = {}
-for song in reversed(uniqueSongsToAdd):
+for song in songsToAdd:
     songSearch = ytmusic.search(song, "songs")
     print("Search Term:", song)
     if not songSearch:
@@ -59,5 +58,4 @@ newPlaylist = ytmusic.create_playlist(
 print(playlistTitle)
 print("playlistId:", newPlaylist)
 print("Found", len(songsToAdd), "songs")
-print(len(uniqueSongsToAdd), "songs were unique")
 print("YTMusic matched", len(videoIds), "songs")
