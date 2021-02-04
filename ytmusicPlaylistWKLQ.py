@@ -1,8 +1,8 @@
-# from requests import Request, Session
 import requests
 from ytmusicapi import YTMusic
+from ytmusicFunctions import getSongVideoIds
 
-date = "2021-01-15"
+date = "2021-01-29"
 url = "http://wklq.tunegenie.com/api/v1/brand/nowplaying/?" +\
     "hour=0&since=" +\
     date + "T00%3A00%3A00-05%3A00&until=" +\
@@ -29,26 +29,15 @@ for song in songList:
     searchTerm = (song['artist'] + " " + song['song'])
     songsToAdd.append(searchTerm)
 
-uniqueSongsToAdd = list(set(songsToAdd))
-
-videoIds = []
-for song in reversed(uniqueSongsToAdd):
-    songSearch = ytmusic.search(song, "songs")
-    print("Search Term:", song)
-    if not songSearch:
-        print("   Returned: None\n")
-    else:
-        firstSong = songSearch[0]
-        videoIds.append(firstSong['videoId'])
-        print("   Returned:", firstSong['artists'][0]['name'], "-", firstSong['title'], "\n")
+videoResults = getSongVideoIds(ytmusic, songsToAdd)
 
 newPlaylist = ytmusic.create_playlist(
     playlistTitle,
     playlistDescription,
     playlistPrivacyStatus,
-    videoIds)
+    videoResults['videoIds'])
 
 print("playlistId:", newPlaylist)
-print("Found", len(songsToAdd), "songs")
-print(len(uniqueSongsToAdd), "songs were unique")
-print("YTMusic matched", len(videoIds), "songs")
+print("Found", videoResults['searchCount'], "songs")
+print(videoResults['uniqueCount'], "songs were unique")
+print("YTMusic matched", videoResults['matchedCount'], "songs")
