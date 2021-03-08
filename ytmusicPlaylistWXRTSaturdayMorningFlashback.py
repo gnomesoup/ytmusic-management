@@ -2,12 +2,13 @@ from requests import get
 import lxml.html
 import re
 from ytmusicapi import YTMusic
+import datetime
 
-year = "2021"
-month = "1"
-day = "23"
+today = datetime.datetime.now()
+lastSaturday = today - datetime.timedelta(days=today.weekday() + 2)
+lastSaturdayFormatted = "{dt.month}%2F{dt.day}%2F{dt.year}".format(dt = lastSaturday)
 url = "http://www.mediabase.com/whatsong/whatsong.asp?var_s=087088082084045070077&MONDTE="\
-    + month + "%2F" + day + "%2F" + year
+    + lastSaturdayFormatted
 ytmusic = YTMusic("headers_auth.json")
 playlistPrivacyStatus = "PUBLIC"
 
@@ -48,7 +49,7 @@ for song in songsToAdd:
 
 playlistYear = max(years, key=lambda k: years[k])
 playlistTitle = "WXRT Saturday Morning Flashback " + playlistYear
-playlistDescription = "Air date " + year + "-" + month.zfill(2) + "-" + day.zfill(2)
+playlistDescription = "Air date " + lastSaturday.strftime("%Y-%m-%d")
 newPlaylist = ytmusic.create_playlist(
     playlistTitle,
     playlistDescription,
