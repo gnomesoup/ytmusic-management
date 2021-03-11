@@ -22,7 +22,8 @@ def getSongVideoIds(ytmSession, SongNameArtistList, RemoveDuplicates = True, Ver
     videoIds = []
     for song in songList:
         songSearch = ytmSession.search(song, "songs")
-        print("Search Term:", song)
+        if Verbose:
+            print("Search Term:", song)
         if not songSearch:
             if Verbose:
                 print("   Returned: No results found\n")
