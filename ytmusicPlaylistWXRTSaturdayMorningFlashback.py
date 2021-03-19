@@ -4,9 +4,11 @@ import re
 from ytmusicapi import YTMusic
 import datetime
 
-today = datetime.datetime.now()
-lastSaturday = today - datetime.timedelta(days=today.weekday() + 2)
+today = datetime.datetime.now() - datetime.timedelta(hours=12)
+weekday = today.weekday()
+lastSaturday = today - datetime.timedelta(days=(7 - (5 - today.weekday())) % 7)
 lastSaturdayFormatted = "{dt.month}%2F{dt.day}%2F{dt.year}".format(dt = lastSaturday)
+
 url = "http://www.mediabase.com/whatsong/whatsong.asp?var_s=087088082084045070077&MONDTE="\
     + lastSaturdayFormatted
 ytmusic = YTMusic("headers_auth.json")
