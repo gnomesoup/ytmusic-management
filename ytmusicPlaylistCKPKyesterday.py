@@ -4,7 +4,8 @@ from ytmusicFunctions import getSongVideoIds
 from datetime import datetime
 
 playlistId = "PLJpUfuX6t6dR9DeM0gOH3rLt99Sl3SDVG"
-print("Updating CKPK yesterday playist")
+
+print("Updating playlist", playlistId)
 
 ytmusic = YTMusic("headers_auth.json")
 try:
@@ -19,11 +20,6 @@ except Exception as e:
 
 url = "https://www.thepeak.fm/api/v1/music/broadcastHistory?day=-1&playerID=757"
 headers = {
-    # "Accept": "*/*",
-    # "X-Requested-With": "XMLHttpRequest",
-    # "Referer": "http://wklq.tunegenie.com/onair/" + date + "/",
-    # "Accept-Encoding": "gzip, deflate",
-    # "Accept-Language": "en-US,en;q=0.9,fil;q=0.8"
     "Host": "www.thepeak.fm",
     "Connection": "keep-alive",
     "sec-ch-ua": "\"Google Chrome\";v=\"89\", \"Chromium\";v=\"89\", \";Not A Brand\";v=\"99\"",
@@ -57,13 +53,13 @@ status = ytmusic.add_playlist_items(playlistId,
 if status == "STATUS_SUCCEEDED":
     nowFormatted = datetime.now().strftime("%Y-%m-%d at %H:%M")
     description = (
-        f"Last updated {nowFormatted}."
-        f"Station played {videoResults['searchCount']} songs."
-        f"{videoResults['uniqueCount']} songs were unique."
-        f"YTMusic match {videoResults['matchedCount']} songs."
+        f"Last updated {nowFormatted}.\n"
+        f"Station played {videoResults['searchCount']} songs.\n"
+        f"{videoResults['uniqueCount']} songs were unique.\n"
+        f"YTMusic match {videoResults['matchedCount']} songs.\n\n"
         f"Note: Songs I've marked as \"dislike\" were not included in the playlist."
         )
     ytmusic.edit_playlist(playlistId, description=description)
-    print(description)
+    print("Playlist update successful")
 else:
     print("There was an error adding songs to the playlist.", status)

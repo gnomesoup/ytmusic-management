@@ -7,6 +7,8 @@ from datetime import date, datetime, timedelta
 
 playlistId = "PLJpUfuX6t6dSaHuu1oeQHWhmMTM6G_hKw"
 
+print("Updating playlist", playlistId)
+
 ytmusic = YTMusic("headers_auth.json")
 try:
     currentSongCount = ytmusic.get_playlist(playlistId, limit=1)["trackCount"]
@@ -39,12 +41,15 @@ videoResults = getSongVideoIds(ytmusic, songsToAdd)
 status = ytmusic.add_playlist_items(playlistId, videoIds=videoResults['videoIds'])
 
 if status == "STATUS_SUCCEEDED":
-    nowFormatted = datetime.now().strftime("Last updated %Y-%m-%d at %H:%M")
-    ytmusic.edit_playlist(playlistId, description=nowFormatted)
-    print("playlistId:", playlistId)
-    print("Removed", currentSongCount, "songs")
-    print("Found", videoResults['searchCount'], "songs")
-    print(videoResults['uniqueCount'], "songs were unique")
-    print("YTMusic matched", videoResults['matchedCount'], "songs")
+    nowFormatted = datetime.now().strftime("%Y-%m-%d at %H:%M")
+    description = (
+        f"Last updated {nowFormatted}.\n"
+        f"Station played {videoResults['searchCount']} songs.\n"
+        f"{videoResults['uniqueCount']} songs were unique.\n"
+        f"YTMusic match {videoResults['matchedCount']} songs.\n\n"
+        f"Note: Songs I've marked as \"dislike\" were not included in the playlist."
+        )
+    ytmusic.edit_playlist(playlistId, description=description)
+    print("Playlist update successful")
 else:
     print("There was an error adding songs to the playist.", status)
