@@ -10,10 +10,6 @@ print("Updating playlist", playlistId)
 ytmusic = YTMusic("headers_auth.json")
 try:
     currentSongCount = ytmusic.get_playlist(playlistId, limit=1)["trackCount"]
-    if currentSongCount > 0:
-        currentPlaylist = ytmusic.get_playlist(playlistId, limit=currentSongCount)
-        # currentSongs = [x['setVideoId'] for x in currentPlaylist['tracks']]
-        ytmusic.remove_playlist_items(playlistId, currentPlaylist['tracks'])
 except Exception as e:
     print("Error accessing playlist: ", e)
     exit()
@@ -47,10 +43,20 @@ for song in songList:
 
 videoResults = getSongVideoIds(ytmusic, songsToAdd)
 
-status = ytmusic.add_playlist_items(playlistId,
-    videoIds=videoResults['videoIds'])
+if currentSongCount > 0:
+    currentPlaylist = ytmusic.get_playlist(playlistId, limit=currentSongCount)
+    # currentSongs = [x['setVideoId'] for x in currentPlaylist['tracks']]
+    ytmusic.remove_playlist_items(playlistId, currentPlaylist['tracks'])
 
-if status == "STATUS_SUCCEEDED":
+addedVideos = False
+for videoId in videoResults['videoIds']:
+    status = ytmusic.add_playlist_items(playlistId, videoIds=[videoId])
+    if status['status'] == "STATUS_SUCCEEDED":
+        addedVideos = True
+    else:
+        print(status)
+
+if addedVideos:
     nowFormatted = datetime.now().strftime("%Y-%m-%d at %H:%M")
     description = (
         f"Last updated {nowFormatted}.\n"
@@ -62,4 +68,4 @@ if status == "STATUS_SUCCEEDED":
     ytmusic.edit_playlist(playlistId, description=description)
     print("Playlist update successful")
 else:
-    print("There was an error adding songs to the playlist.", status)
+    print("There was an error adding songs to the playlist.")
