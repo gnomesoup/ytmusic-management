@@ -1,4 +1,5 @@
 from os import sep
+from requests.api import request
 from ytmusicapi import YTMusic
 from datetime import timedelta, datetime
 import pickle
@@ -7,7 +8,7 @@ from time import time, sleep
 from requests import post
 from secretsFile import malojaKey
 
-def GetLatestHistory(updatedHistory, history, queuedRequests):
+def GetLatestHistory(updatedHistory, history):
     '''
     Compare the latest YouTube Music history with a previously pulled
     dictionary of history.
@@ -16,8 +17,8 @@ def GetLatestHistory(updatedHistory, history, queuedRequests):
     newHistory = []
     for song in updatedHistory:
         artists = [artist['name'] for artist in song['artists']]
-        if song['played'] in ["Today"]:
-        # if song['played'] in ["Today", "Yesterday"]:
+        # if song['played'] in ["Today"]:
+        if song['played'] in ["Today", "Yesterday"]:
             newHistory.append({
                 "videoId": song['videoId'],
                 "title": song['title'],
@@ -50,8 +51,7 @@ def GetLatestHistory(updatedHistory, history, queuedRequests):
     now = datetime.now()
     songDurations = timedelta(seconds=0)
     postCount = 0
-    if not queuedRequests:
-        queuedRequests = []
+    newRequests = []
     for song in reversed(newHistory[0:matchStartIndex]):
         # matches = regex.match(song['duration'])
         # if matches:
@@ -69,9 +69,9 @@ def GetLatestHistory(updatedHistory, history, queuedRequests):
             "time": int(datetime.now().timestamp())
             # "time": int(datetime.utcnow().timestamp())
             }
-        queuedRequests.append(requestData)
+        newRequests.append(requestData)
 
-    return newHistory, queuedRequests
+    return newHistory, newRequests
 
 def PostScrobble(url, request):
     # result = post(
@@ -90,41 +90,50 @@ def PostScrobble(url, request):
 ytmusic = YTMusic("headers_auth.json")
 scrobblerURL = "https://maloja.mmjo.com/apis/mlj_1/newscrobble"
 queuedRequests = []
+requestAttempts = 0
 
 while True:
     history = {}
     updatedHistory = {}
-    for item in ytmusic.get_watch_playlist():
-        print(item)
-    # try:
-    #     with open("ytmusicHistory.p", "rb") as file:
-    #         history = pickle.load(file)
-    # except:
-    #     print("Initializing data")
 
-    # if history:
-    #     try:
-    #         updatedHistory = ytmusic.get_history()
-    #         updatedHistory, queuedRequests = GetLatestHistory(
-    #                                                     updatedHistory,
-    #                                                     history,
-    #                                                     queuedRequests
-    #                                                     )
-    #         if queuedRequests:
-    #             if len(queuedRequests) > 3:
-    #                 print("<<< Too many requests! DUMP")
-    #                 print("history:")
-    #                 print(history)
-    #                 print("updatedHistory")
-    #                 print(updatedHistory)
-    #                 print("end DUMP >>>")
-    #             print("Queued requests:", len(queuedRequests))
-    #             queuedRequests = [request for request in queuedRequests\
-    #                 if not PostScrobble(scrobblerURL, request)]
-    #         if updatedHistory:
-    #             with open("ytmusicHistory.p", "wb") as file:
-    #                 pickle.dump(updatedHistory, file)
-    #     except Exception as e:
-    #         print(e)
+    try:
+        with open("ytmusicHistory.p", "rb") as file:
+            history = pickle.load(file)
+    except:
+        print("Initializing data")
+
+    if history:
+        try:
+            updatedHistory = ytmusic.get_history()
+            updatedHistory, newRequests = GetLatestHistory(
+                                                        updatedHistory,
+                                                        history
+                                                        )
+            if len(newRequests) > 2 and requestAttempts < 3:
+                print(datetime.now().isoformat())
+                # print("<<< Too many requests! DUMP")
+                print("Too many requests!")
+                print("history:", len(history))
+                # print([x['videoId'] for x in history])
+                print("updatedHistory:", len(updatedHistory))
+                # print([x['videoId'] for x in updatedHistory])
+                # print("end DUMP >>>")
+                requestAttempts = requestAttempts + 1
+                print("requestAttempt:", requestAttempts)
+            else:
+                requestAttempts = 0
+                if queuedRequests:
+                    queuedRequests = queuedRequests + newRequests
+                else:
+                    queuedRequests = newRequests
+                if queuedRequests:
+                    print("Queued requests:", len(queuedRequests))
+                    queuedRequests = [request for request in queuedRequests\
+                        if not PostScrobble(scrobblerURL, request)]
+                if updatedHistory:
+                    with open("ytmusicHistory.p", "wb") as file:
+                        pickle.dump(updatedHistory, file)
+        except Exception as e:
+            print("While loop error:", e)
 
     sleep(60.0 - (time() % 60.0))
