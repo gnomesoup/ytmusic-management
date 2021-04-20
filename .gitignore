@@ -3,3 +3,8 @@
 .vscode
 headers_auth.json
 *.code-workspace
+secretsFile.py
+ytmusicHistory.p
+maloja.http
+__pycache__
+.DS_Store
