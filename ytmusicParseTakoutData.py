@@ -12,7 +12,7 @@ from pymongo import MongoClient
 def parseTakeoutItem(item, ytmusic):
     try:
         outDict = {}
-        outDict["time"] = item["time"]
+        outDict["time"] = parser.parse(item["time"])
         titleUrl = item["titleUrl"]
         regexString = re.compile(r"\?v=(.*)$")
         result = regexString.search(titleUrl)
@@ -57,8 +57,7 @@ with open(takeoutFilePath) as takeoutFile:
 
 print("takeoutData count:", len(takeoutData))
 currentData = [item for item in takeoutData\
-    if (parser.parse(item['time']) < parser.parse("2021-03-01T00:00:00.000Z")
-        and parser.parse(item['time']) > parser.parse("2021-02-01T00:00.000Z"))]
+    if (parser.parse(item['time']) < parser.parse("2020-10-01T00:00:00.000Z"))]
 print("currentData:", len(currentData))
 
 ytmusicData = [parseTakeoutItem(item, ytmusic) for item in currentData

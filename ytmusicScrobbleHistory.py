@@ -1,13 +1,12 @@
 from os import sep
-import pymongo
 from ytmusicapi import YTMusic
 from datetime import timedelta, datetime
 import pickle
 import re
 from time import time, sleep
-from secretsFile import mongoString
+from secretsFile import mongoString, homeassistantToken, homeassistantUrl
 from pymongo import MongoClient
-from bson.objectid import ObjectId
+from requests import get
 
 def GetLatestHistory(updatedHistory, history, scrobblerUser):
     '''
@@ -55,6 +54,24 @@ def GetLatestHistory(updatedHistory, history, scrobblerUser):
     songDurations = timedelta(seconds=0)
     postCount = 0
     newRequests = []
+    try:
+        homeassistantResult = get(homeassistantUrl\
+            + "/api/states/person.michael",
+                    headers={
+                        "Authorization": "Bearer " + homeassistantToken,
+                        "Content-Type": "application/json"
+                    })
+        homeassistantData = homeassistantResult.json()
+        location = {
+            "type": "Point",
+            "coordinates": [
+                homeassistantData["attributes"]["longitude"],
+                homeassistantData["attributes"]["latitude"]
+            ]
+        }
+    except Exception as e:
+        print("location error:", e)
+        location = {}
     for song in reversed(newHistory[0:matchStartIndex]):
         requestData = {
             "artists": song['artists'],
@@ -63,7 +80,8 @@ def GetLatestHistory(updatedHistory, history, scrobblerUser):
             "source": "YouTube Music",
             "time": datetime.utcnow(),
             "user": scrobblerUser,
-            "videoId": song['videoId']
+            "videoId": song['videoId'],
+            "location": location
             }
         newRequests.append(requestData)
 
@@ -90,6 +108,7 @@ requestAttempts = 0
 while True:
     history = {}
     updatedHistory = {}
+    
 
     try:
         with open("ytmusicHistory.p", "rb") as file:
@@ -99,25 +118,30 @@ while True:
 
     if history:
         try:
-            updatedHistory = ytmusic.get_history()
-            updatedHistory, newRequests = GetLatestHistory(
-                                                        updatedHistory,
-                                                        history,
-                                                        scrobblerUser
-                                                        )
-            if len(newRequests) > 2 and requestAttempts < 3:
-                print(datetime.now().isoformat())
-                # print("<<< Too many requests! DUMP")
-                print("Too many requests!")
-                print("history:", len(history))
-                # print([x['videoId'] for x in history])
-                print("updatedHistory:", len(updatedHistory))
-                # print([x['videoId'] for x in updatedHistory])
-                # print("end DUMP >>>")
-                requestAttempts = requestAttempts + 1
-                print("requestAttempt:", requestAttempts)
-            else:
-                requestAttempts = 0
+            requestsReady = False
+            setVariables = {}
+            while not requestsReady:
+                updatedHistory = ytmusic.get_history()
+                updatedHistory, newRequests = GetLatestHistory(
+                                                            updatedHistory,
+                                                            history,
+                                                            scrobblerUser
+                                                            )
+                if len(newRequests) > 2 and requestAttempts < 4:
+                    print(datetime.now().isoformat())
+                    # print("<<< Too many requests! DUMP")
+                    print("Too many requests!")
+                    print("history:", len(history))
+                    # print([x['videoId'] for x in history])
+                    print("updatedHistory:", len(updatedHistory))
+                    # print([x['videoId'] for x in updatedHistory])
+                    # print("end DUMP >>>")
+                    requestAttempts = requestAttempts + 1
+                    print("requestAttempt:", requestAttempts)
+                else:
+                    requestAttempts = 0
+                    requestsReady = True
+            if requestsReady:
                 if queuedRequests:
                     queuedRequests = queuedRequests + newRequests
                 else:
@@ -129,23 +153,19 @@ while True:
                 if updatedHistory:
                     with open("ytmusicHistory.p", "wb") as file:
                         pickle.dump(updatedHistory, file)
-            videoIds = [item['videoId'] for item in updatedHistory]
+                    videoIds = [item['videoId'] for item in updatedHistory]
+                    setVariables["videoIds"] = videoIds
+            setVariables["lastUpdate"] = datetime.utcnow()
             results = db['scrobblers'].update_one(
                 {
-                    "_id": ObjectId(scrobblerId),
-                    "users": {
-                        "$elemMatch": {
-                            "user": scrobblerUser
-                        }
-                    }
+                    "name": "ytmusic history scrobbler",
+                    "user": scrobblerUser
                 },
                 {
-                    "$set": {
-                        "users.$.lastUpdate": datetime.utcnow(),
-                        "users.$.videoIds": videoIds
-                    }
+                    "$set": setVariables
                 }
             )
+            # print(results.modified_count)
         except Exception as e:
             print("While loop error:", e)
     sleep(60.0 - (time() % 60.0))
