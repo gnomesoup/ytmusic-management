@@ -113,8 +113,17 @@ while True:
     
 
     try:
-        with open("ytmusicHistory.p", "rb") as file:
-            history = pickle.load(file)
+        # with open("ytmusicHistory.p", "rb") as file:
+        #     history = pickle.load(file)
+        scrobblerInfo = db['scrobblers'].find_one(
+            {
+                "name": "ytmusic history scrobbler",
+                "user": scrobblerUser
+            })
+        print(scrobblerInfo)
+        history = scrobblerInfo['videoIds']
+        print("history=", history)
+        exit()
     except:
         print("Initializing data")
 
@@ -153,8 +162,8 @@ while True:
                     queuedRequests = [request for request in queuedRequests\
                         if not PostScrobble(db['songs'], request)]
                 if updatedHistory:
-                    with open("ytmusicHistory.p", "wb") as file:
-                        pickle.dump(updatedHistory, file)
+                    # with open("ytmusicHistory.p", "wb") as file:
+                    #     pickle.dump(updatedHistory, file)
                     videoIds = [item['videoId'] for item in updatedHistory]
                     setVariables["videoIds"] = videoIds
             setVariables["lastUpdate"] = datetime.utcnow()
