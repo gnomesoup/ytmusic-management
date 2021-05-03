@@ -105,6 +105,8 @@ scrobblerUser = "michael"
 queuedRequests = []
 requestAttempts = 0
 
+print("ytmusicScrobble to MongoDB")
+
 while True:
     history = {}
     updatedHistory = {}
