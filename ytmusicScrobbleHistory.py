@@ -110,7 +110,7 @@ print("ytmusicScrobble to MongoDB")
 while True:
     history = {}
     updatedHistory = {}
-    
+    setVariables = {}
 
     try:
         # with open("ytmusicHistory.p", "rb") as file:
@@ -120,17 +120,17 @@ while True:
                 "name": "ytmusic history scrobbler",
                 "user": scrobblerUser
             })
-        print(scrobblerInfo)
         history = scrobblerInfo['videoIds']
-        print("history=", history)
-        exit()
     except:
         print("Initializing data")
 
-    if history:
+    if not history:
+        updatedHistory = ytmusic.get_history()
+        setVariables[videoIds] = [item['videoId'] for item in updatedHistory]
+
+    else:
         try:
             requestsReady = False
-            setVariables = {}
             while not requestsReady:
                 updatedHistory = ytmusic.get_history()
                 updatedHistory, newRequests = GetLatestHistory(
@@ -168,14 +168,14 @@ while True:
         except Exception as e:
             print("While loop error:", e)
 
-        setVariables["lastUpdate"] = datetime.utcnow()
-        results = db['scrobblers'].update_one(
-            {
-                "name": "ytmusic history scrobbler",
-                "user": scrobblerUser
-            },
-            {
-                "$set": setVariables
-            }
-        )
+    setVariables["lastUpdate"] = datetime.utcnow()
+    results = db['scrobblers'].update_one(
+        {
+            "name": "ytmusic history scrobbler",
+            "user": scrobblerUser
+        },
+        {
+            "$set": setVariables
+        }
+    )
     sleep(60.0 - (time() % 60.0))
