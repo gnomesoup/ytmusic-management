@@ -162,21 +162,20 @@ while True:
                     queuedRequests = [request for request in queuedRequests\
                         if not PostScrobble(db['songs'], request)]
                 if updatedHistory:
-                    # with open("ytmusicHistory.p", "wb") as file:
-                    #     pickle.dump(updatedHistory, file)
                     videoIds = [item['videoId'] for item in updatedHistory]
                     setVariables["videoIds"] = videoIds
-            setVariables["lastUpdate"] = datetime.utcnow()
-            results = db['scrobblers'].update_one(
-                {
-                    "name": "ytmusic history scrobbler",
-                    "user": scrobblerUser
-                },
-                {
-                    "$set": setVariables
-                }
-            )
             # print(results.modified_count)
         except Exception as e:
             print("While loop error:", e)
+
+        setVariables["lastUpdate"] = datetime.utcnow()
+        results = db['scrobblers'].update_one(
+            {
+                "name": "ytmusic history scrobbler",
+                "user": scrobblerUser
+            },
+            {
+                "$set": setVariables
+            }
+        )
     sleep(60.0 - (time() % 60.0))
