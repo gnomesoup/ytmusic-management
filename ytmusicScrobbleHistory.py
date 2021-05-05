@@ -36,7 +36,7 @@ def GetLatestHistory(updatedHistory, history, scrobblerUser):
         lastId = None
         for i in range(len(newHistory)):
             currentId = newHistory[i]['videoId']
-            if newHistory[i]['videoId'] == history[currentIndex]['videoId']:
+            if newHistory[i]['videoId'] == history[currentIndex]:
                 if currentId != lastId:
                     # print(i, newHistory[i]['title'],
                     #       "==",
