@@ -7,4 +7,6 @@ playlistId = "PLJpUfuX6t6dSaHuu1oeQHWhmMTM6G_hKw"
 ytmusic = YTMusic("headers_auth.json")
 
 if UpdateWXRTYesterday(ytmusic, playlistId):
-    print("Playlist Update Successful")
+    print("Playlist update successful")
+else:
+    print("Error updating playlist")

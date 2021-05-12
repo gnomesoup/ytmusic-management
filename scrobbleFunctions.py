@@ -2,12 +2,7 @@ import re
 from requests import get
 from datetime import datetime, timedelta
 
-def GetLatestHistory(
-    updatedHistory,
-    history,
-    scrobblerUser,
-    location={}
-):
+def GetLatestHistory(updatedHistory, history, scrobblerUser):
     '''
     Compare the latest YouTube Music history with a previously pulled
     dictionary of history.
@@ -55,45 +50,122 @@ def GetLatestHistory(
             "source": "YouTube Music",
             "time": datetime.utcnow(),
             "user": scrobblerUser,
-            "videoId": song['videoId'],
-            "location": location
+            "videoId": song['videoId']
             }
         newRequests.append(requestData)
 
     return newHistory, newRequests
 
 def PostScrobble(dbCollection, request):
-    try:
-        result = dbCollection.insert_one(request)
-        print(result.inserted_id)
-        return True
-    except Exception as e:
-        print("Error posting scrobble:", e)
-        print("Queueing for next run")
-        return False
+    result = dbCollection.insert_one(request)
+    return {"scrobbleId": result.inserted_id, "videoId": request['videoId']}
 
 def GetLocationFromHomeAssistant(
     homeassistantUrl,
     homeassistantToken,
     locationEntity
 ):
-    try:
-        homeassistantResult = get(
-            homeassistantUrl + "/api/states/" + locationEntity,
-            headers={
-                "Authorization": "Bearer " + homeassistantToken,
-                "Content-Type": "application/json"
-            }
-        )
-        homeassistantData = homeassistantResult.json()
-        location = {
-            "type": "Point",
-            "coordinates": [
-                homeassistantData["attributes"]["longitude"],
-                homeassistantData["attributes"]["latitude"]
-            ]
+    location = {}
+    homeassistantResult = get(
+        homeassistantUrl + "/api/states/" + locationEntity,
+        headers={
+            "Authorization": "Bearer " + homeassistantToken,
+            "Content-Type": "application/json"
         }
-    except Exception as e:
-        print("location error:", e)
-        location = {}
+    )
+    homeassistantData = homeassistantResult.json()
+    location = {
+        "type": "Point",
+        "coordinates": [
+            homeassistantData["attributes"]["longitude"],
+            homeassistantData["attributes"]["latitude"]
+        ]
+    }
     return location
+
+def GetScrobblerHistory(dbCollection, scrobblerUser):
+    history = []
+    scrobblerInfo = dbCollection.find_one(
+        {
+            "name": "ytmusic history scrobbler",
+            "user": scrobblerUser
+        })
+    if "videoIds" in scrobblerInfo:
+        history = scrobblerInfo['videoIds']
+    return history
+
+def ScrobbleAddLocation( dbCollection, scrobbleId, location):
+    return dbCollection.update_one(
+        {"_id": scrobbleId},
+        {"$set": {"location": location}}
+    )
+
+def ScrobbleCheck(ytmusic, MongoDB, scrobblerUser):
+    if not hasattr(ScrobbleCheck, "queuedRequests"):
+        ScrobbleCheck.queuedRequests = []
+    if not hasattr(ScrobbleCheck, "requestAttempts"):
+        ScrobbleCheck.requestAttempts = 0
+    updatedHistory = {}
+    setVariables = {}
+    scrobbleIds = {}
+
+    # Get previous scrobble history
+    history = GetScrobblerHistory(MongoDB['scrobblers'], scrobblerUser)
+    if not history:
+        updatedHistory = ytmusic.get_history()
+        setVariables[videoIds] = [item['videoId'] for item in updatedHistory]
+    else:
+        requestsReady = False
+        while not requestsReady:
+            updatedHistory = ytmusic.get_history()
+            updatedHistory, newRequests = GetLatestHistory(
+                updatedHistory,
+                history,
+                scrobblerUser
+            )
+            if len(newRequests) > 2 and ScrobbleCheck.requestAttempts < 4:
+                print(
+                    f"{datetime.now().isoformat()}  Too many requests!"
+                    f"history: {len(history)} "
+                    f"updatedHistory: {len(updatedHistory)} "
+                    f"attempts: {ScrobbleCheck.requestAttempts}"
+                )
+                ScrobbleCheck.requestAttempts += 1
+                print("requestAttempt:", ScrobbleCheck.requestAttempts)
+            else:
+                ScrobbleCheck.requestAttempts = 0
+                requestsReady = True
+        if requestsReady:
+            if ScrobbleCheck.queuedRequests:
+                ScrobbleCheck.queuedRequests += newRequests
+            else:
+                ScrobbleCheck.queuedRequests = newRequests
+            if ScrobbleCheck.queuedRequests:
+                postResult = [
+                    PostScrobble(MongoDB['songs'], request)
+                    for request in ScrobbleCheck.queuedRequests
+                ]
+                postedVideoIds = [
+                    request['videoId'] for request in postResult
+                ]
+                scrobbleIds = [
+                    request['scrobbleId'] for request in postResult
+                ]
+                ScrobbleCheck.queuedRequests = [
+                    request for request in ScrobbleCheck.queuedRequests
+                    if request['videoId'] not in postedVideoIds
+                ]
+            if updatedHistory:
+                videoIds = [item['videoId'] for item in updatedHistory]
+                setVariables["videoIds"] = videoIds
+    setVariables["lastUpdate"] = datetime.utcnow()
+    MongoDB['scrobblers'].update_one(
+        {
+            "name": "ytmusic history scrobbler",
+            "user": scrobblerUser
+        },
+        {
+            "$set": setVariables
+        }
+    )
+    return scrobbleIds
