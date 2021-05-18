@@ -55,9 +55,9 @@ def getSongVideoIds(
                     else:
                         years[yearReleased] = 1
             if ExcludeDislike:
-                likeStatus = "INDIFFERENT"
-            else:
                 likeStatus = getLikeStatus(ytmSession, firstSong)
+            else:
+                likeStatus = "INDIFFERENT"
             if likeStatus != "DISLIKE":
                 videoIds.append(videoId)
                 if Verbose:
