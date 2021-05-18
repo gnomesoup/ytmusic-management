@@ -7,7 +7,7 @@ print("Updating playlist", playlistId)
 
 ytmusic = YTMusic("headers_auth.json")
 
-if UpdateCKPKyesterday(ytmusic, playlistId):
+if UpdateCKPKYesterday(ytmusic, playlistId):
     print("Playlist update successful")
 else:
     print("There was an error adding songs to the playlist.")
