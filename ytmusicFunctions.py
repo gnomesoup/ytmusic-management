@@ -105,7 +105,7 @@ def UpdatePlaylist(
         status = ytmusic.add_playlist_items(
             playlistId, videoIds=[videoId]
         )
-        if status == "STATUS_SUCCEEDED":
+        if status['status'] == "STATUS_SUCCEEDED":
             addedVideos = True
         else:
             print(status)
