@@ -5,8 +5,10 @@ from pymongo import MongoClient
 from secretsFile import mongoString, homeassistantToken, homeassistantUrl
 from scrobbleFunctions import ScrobbleCheck, GetLocationFromHomeAssistant, \
     ScrobbleAddLocation
-from ytmusicFunctions import UpdateWXRTYesterday, CreateWXRTFlashback, \
-    UpdateCKPKYesterday
+from ytmusicFunctions import UpdateWXRTYesterday, \
+    CreateWXRTFlashback, \
+    UpdateCKPKYesterday, \
+    UpdateWKLQYesterday
 import schedule
 from threading import Thread
 
@@ -34,6 +36,11 @@ schedule.every().day.at("00:00").do(
     runThreaded,
     lambda: UpdateWXRTYesterday(ytmusic, "PLJpUfuX6t6dSaHuu1oeQHWhmMTM6G_hKw"),
     "WXRT_Yesterday"
+)
+schedule.every().day.at("00:30").do(
+    runThreaded,
+    lambda: UpdateWKLQYesterday(ytmusic, "PLJpUfuX6t6dRg0mxM5fEufwZOd5eu_DmU"),
+    "WKLQ_Yesterday"
 )
 schedule.every().day.at("02:05").do(
     runThreaded,
