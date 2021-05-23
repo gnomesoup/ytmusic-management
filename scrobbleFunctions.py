@@ -2,8 +2,6 @@ import re
 import requests
 from datetime import datetime, timedelta
 
-def dictionaryGet(dictionary, keys, ):
-
 def GetLatestHistory(updatedHistory, history, scrobblerUser):
     '''
     Compare the latest YouTube Music history with a previously pulled
