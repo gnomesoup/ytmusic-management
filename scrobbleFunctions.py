@@ -1,6 +1,8 @@
 import re
-from requests import get
+import requests
 from datetime import datetime, timedelta
+
+def dictionaryGet(dictionary, keys, ):
 
 def GetLatestHistory(updatedHistory, history, scrobblerUser):
     '''
@@ -10,16 +12,20 @@ def GetLatestHistory(updatedHistory, history, scrobblerUser):
 
     newHistory = []
     for song in updatedHistory:
-        artists = [artist['name'] for artist in song['artists']]
         # if song['played'] in ["Today"]:
         if "release" in song:
             release = song['release']
         if song['played'] in ["Today", "Yesterday"]:
+            artists = [artist['name'] for artist in song['artists']]
+            try:
+                album = song['album']['name']
+            except Exception:
+                album = None
             newHistory.append({
                 "videoId": song['videoId'],
                 "title": song['title'],
                 "artists": artists,
-                "album": song['album']['name'],
+                "album": album,
                 "played": song['played'],
                 "duration": song['duration']
             })
@@ -66,7 +72,7 @@ def GetLocationFromHomeAssistant(
     locationEntity
 ):
     location = {}
-    homeassistantResult = get(
+    homeassistantResult = requests.get(
         homeassistantUrl + "/api/states/" + locationEntity,
         headers={
             "Authorization": "Bearer " + homeassistantToken,
