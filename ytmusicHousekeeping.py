@@ -11,7 +11,6 @@ from ytmusicFunctions import UpdateWXRTYesterday, \
     UpdateWKLQYesterday
 import schedule
 from threading import Thread
-import traceback
 
 ytmusic = YTMusic("headers_auth.json")
 mongoClient = MongoClient(mongoString)
@@ -82,7 +81,6 @@ while True:
             f"{datetime.now().isoformat()}  "
             f"Scrobble error: {e}"
         )
-        traceback.print_exc()
     
     try:
         schedule.run_pending()
