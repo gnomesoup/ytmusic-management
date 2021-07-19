@@ -11,11 +11,11 @@ def GrabTime(scrobble):
 
 
 fromTZ = tz.gettz("UTC")
-toTZ = tz.gettz("America/Chicago")
+toTZ = tz.gettz("America/Detroit")
 
 mongoClient = MongoClient(mongoString)
 db = mongoClient['scrobble']
-songs = db['songs']
+songs = db['scrobbles']
 
 # homeassistantResult = get(homeassistantUrl + "/api/states/person.michael",
 #                headers={
@@ -26,7 +26,7 @@ songs = db['songs']
 # print(homeassistantData['attributes']['latitude'],
 #       homeassistantData['attributes']['longitude'])
 
-# songCount = db['songs'].delete_many({'time': {
+# songCount = db['scrobbles'].delete_many({'time': {
 #     "$gte": parser.parse("2021-04-22T04:22:00.000Z"),
 #     "$lt": parser.parse("2021-04-22T04:24:00.000Z")
 #     }})
@@ -41,8 +41,17 @@ print("scrobbles with unformatted dates:", songCount)
 
 # for song in dateless:
 #     newDate = parser.parse(song['time'])
-#     result = db['songs'].update_one({"_id": song['_id']}, {"$set": {"time": newDate}})
+#     result = db['scrobbles'].update_one({"_id": song['_id']}, {"$set": {"time": newDate}})
 #     print(result.modified_count)
+
+def PrintScrobble(scrobble, toTZ):
+    scrobbleTimeUTC = scrobble['time'].replace(tzinfo=tz.gettz("UTC"))
+    scrobbleTimeLocal = scrobbleTimeUTC.astimezone(toTZ)
+    print(scrobbleTimeLocal.strftime("%Y-%m-%d %H:%M"),
+        "    ",
+        scrobble['title'],
+        "-",
+        ", ".join(scrobble['artists']))
 
 # today's scrobbles
 today = datetime.combine(date.today(), datetime.min.time())
@@ -77,7 +86,7 @@ songCount = songs.count_documents(
 print("scrobbles from last 7 days:", songCount)
 
 # search by artist
-artist = "U2"
+artist = "Roxy Music"
 artistQuery = {"artists": artist}
 artistCount = songs.count_documents(artistQuery)
 if artistCount == 1:
@@ -91,3 +100,6 @@ print("first played", firstPlayed["title"], "on",
         firstPlayed["time"].strftime("%Y-%m-%d at %H:%M"))
 print("last played", lastPlayed["title"], "on", 
         lastPlayed["time"].strftime("%Y-%m-%d at %H:%M"))
+
+allSongs = songs.find(artistQuery, sort=[("time", -1)])
+[PrintScrobble(song, toTZ) for song in allSongs]

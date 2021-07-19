@@ -64,7 +64,7 @@ while True:
             )
             for scrobbleId in scrobbleIds:
                 ScrobbleAddLocation(
-                    db['songs'],
+                    db['scrobbles'],
                     scrobbleId,
                     location
                 )

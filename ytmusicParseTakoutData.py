@@ -50,7 +50,7 @@ db = mongoClient['scrobble']
 # test = {"name": "test name", "artists": ["artist1", "artist2"],
 #         "album": "test album",
 #         "time": datetime.utcnow(), "user": "michael"}
-# db['songs'].insert_one(test,)
+# db['scrobbles'].insert_one(test,)
 
 with open(takeoutFilePath) as takeoutFile:
     takeoutData = json.load(takeoutFile)
@@ -76,4 +76,4 @@ print("ytmusic count:", len(ytmusicData))
 
 while ytmusicData:
     ytmusicData = [request for request in ytmusicData\
-                    if not PostScrobble(db["songs"], request)]
+                    if not PostScrobble(db['scrobbles'], request)]

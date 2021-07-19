@@ -241,7 +241,7 @@ def UpdateCKPKYesterday(ytmusic, playlistId):
 
     r = get(url, headers=headers)
     rJson = r.json()
-    songList = rJson['data']['songs']
+    songList = rJson['data']['scrobbles']
 
     songsToAdd = []
     for song in songList:

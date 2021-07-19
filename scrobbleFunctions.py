@@ -146,7 +146,7 @@ def ScrobbleCheck(ytmusic, MongoDB, scrobblerUser):
                 ScrobbleCheck.queuedRequests = newRequests
             if ScrobbleCheck.queuedRequests:
                 postResult = [
-                    PostScrobble(MongoDB['songs'], request)
+                    PostScrobble(MongoDB['scrobbles'], request)
                     for request in ScrobbleCheck.queuedRequests
                 ]
                 postedVideoIds = [

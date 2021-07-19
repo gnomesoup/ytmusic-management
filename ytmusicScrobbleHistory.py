@@ -70,7 +70,7 @@ while True:
                 if queuedRequests:
                     print("Queued requests:", len(queuedRequests))
                     queuedRequests = [request for request in queuedRequests\
-                        if not PostScrobble(db['songs'], request)]
+                        if not PostScrobble(db['scrobbles'], request)]
                 if updatedHistory:
                     videoIds = [item['videoId'] for item in updatedHistory]
                     setVariables["videoIds"] = videoIds
