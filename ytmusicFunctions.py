@@ -24,6 +24,8 @@ def getSongVideoIds(
     CollectPrimaryYear=False,
     Verbose=False
 ):
+    if not SongNameArtistList:
+        return
     songList = []
     years = {}
     if RemoveDuplicates:
@@ -49,13 +51,15 @@ def getSongVideoIds(
             videoId = firstSong['videoId']
             if CollectPrimaryYear:
                 songInfo = ytmSession.get_song(firstSong['videoId'])
-                matchResult = re.search(r"^\d{4}", songInfo['release'])
-                if matchResult is not None:
-                    yearReleased = matchResult.group()
-                    if yearReleased in years:
-                        years[yearReleased] = years[yearReleased] + 1
-                    else:
-                        years[yearReleased] = 1
+                if "album" in firstSong:
+                    albumId = firstSong['album']['id']
+                    albumInfo = ytmSession.get_album(albumId)
+                    if "releaseDate" in albumInfo:
+                        yearReleased = albumInfo["releaseDate"]["year"]
+                        if yearReleased in years:
+                            years[yearReleased] = years[yearReleased] + 1
+                        else:
+                            years[yearReleased] = 1
             if ExcludeDislike:
                 likeStatus = getLikeStatus(ytmSession, firstSong)
             else:
@@ -197,7 +201,7 @@ def CreateWXRTFlashback(ytmusic, playlistDate=None):
     )
 
     playlistYear = searchResults['primaryYear']
-    playlistTitle = "WXRT Saturday Morning Flashback " + playlistYear
+    playlistTitle = f"WXRT Saturday Morning Flashback {playlistYear}"
     playlistDescription = "Air date " + lastSaturday.strftime("%Y-%m-%d")
     newPlaylist = ytmusic.create_playlist(
         playlistTitle,
