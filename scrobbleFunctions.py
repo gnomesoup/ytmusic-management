@@ -60,9 +60,51 @@ def GetLatestHistory(updatedHistory, history, scrobblerUser):
 
     return newHistory, newRequests
 
-def PostScrobble(dbCollection, request):
-    result = dbCollection.insert_one(request)
+def PostScrobble(db, request):
+    result = db['scrobbles'].insert_one(request)
+    print(f"PostScrobble: {result=}")
     return {"scrobbleId": result.inserted_id, "videoId": request['videoId']}
+
+def GetSongId(ytmusic, db, videoId):
+    # try:
+        songDocument = db['songs'].find_one(
+            {"ytmusicId": videoId},
+            {"ytmusicId": 1}
+        )
+        if songDocument is None:
+            watchPlaylist = ytmusic.get_watch_playlist(videoId)
+            songInfo = watchPlaylist['tracks'][0]
+            documentData = {
+                    "title": songInfo['title'],
+                    "artists": [
+                        artist['name'] for artist in songInfo['artists']
+                    ],
+                    "ytmusicId": songInfo['videoId']
+                }
+            if "album" in songInfo:
+                documentData['album'] = songInfo['album']['name']
+            if "likeStatus" in songInfo:
+                documentData['dislike'] = True if songInfo['likeStatus'] == \
+                    "DISLIKE" else False
+                documentData['like'] = True if songInfo['likeStatus'] == \
+                    "LIKE" else False
+            songDocument = db['songs'].insert_one(documentData)
+        return songDocument.inserted_id
+    # except Exception:
+        # return None
+
+def LinkScrobblerSong(ytmusic, db, _id):
+    scrobbleDocument = db['scrobbles'].find_one(
+        {"_id": _id}
+    )
+    songId = GetSongId(ytmusic, db, scrobbleDocument['videoId'])
+    if songId:
+        db['scrobbles'].update_one(
+            {"_id": scrobbleDocument["_id"]},
+            {"$set": {"songId": songId}}
+        )
+    return songId
+
 
 def GetLocationFromHomeAssistant(
     homeassistantUrl,
@@ -146,7 +188,7 @@ def ScrobbleCheck(ytmusic, MongoDB, scrobblerUser):
                 ScrobbleCheck.queuedRequests = newRequests
             if ScrobbleCheck.queuedRequests:
                 postResult = [
-                    PostScrobble(MongoDB['scrobbles'], request)
+                    PostScrobble(MongoDB, request)
                     for request in ScrobbleCheck.queuedRequests
                 ]
                 postedVideoIds = [

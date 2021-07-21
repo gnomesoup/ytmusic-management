@@ -22,10 +22,12 @@ def getSongVideoIds(
     RemoveDuplicates=True,
     ExcludeDislike=True,
     CollectPrimaryYear=False,
-    Verbose=False
+    Verbose=False,
+    mongodb=None
 ):
     if not SongNameArtistList:
         return
+    
     songList = []
     years = {}
     if RemoveDuplicates:
@@ -37,30 +39,42 @@ def getSongVideoIds(
     
     videoIds = []
     for song in songList:
+        videoId = None
+        likeStatus = None
         if "john c mellencamp" in song.lower():
             song = song.lower().replace("john c mellencamp", "john mellencamp")
-        songSearch = ytmSession.search(song, "songs")
-        if Verbose:
-            print("Search Term:", song)
-        if not songSearch:
+        if mongodb:
+            songDocument = mongodb.songs.find_one(
+                {"searchStrings": {"$in": song}},
+                projection={"ytmusicId": 1, "dislike": 1}
+            )
+            videoId = songDocument['ytmusicId']
+            if "dislike" in songDocument:
+                likeStatus = "DISLIKE" if songDocument['dislike']\
+                    else "INDIFFERENT"
+        if not videoId:
+            songSearch = ytmSession.search(song, "songs")
             if Verbose:
-                print("   Returned: No results found\n")
-            continue
-        else:
-            firstSong = songSearch[0]
-            videoId = firstSong['videoId']
-            if CollectPrimaryYear:
-                songInfo = ytmSession.get_song(firstSong['videoId'])
-                if "album" in firstSong:
-                    albumId = firstSong['album']['id']
-                    albumInfo = ytmSession.get_album(albumId)
-                    if "releaseDate" in albumInfo:
-                        yearReleased = albumInfo["releaseDate"]["year"]
-                        if yearReleased in years:
-                            years[yearReleased] = years[yearReleased] + 1
-                        else:
-                            years[yearReleased] = 1
-            if ExcludeDislike:
+                print("Search Term:", song)
+            if not songSearch:
+                if Verbose:
+                    print("   Returned: No results found\n")
+                continue
+            else:
+                firstSong = songSearch[0]
+                videoId = firstSong['videoId']
+                if CollectPrimaryYear:
+                    # songInfo = ytmSession.get_song(firstSong['videoId'])
+                    if "album" in firstSong:
+                        albumId = firstSong['album']['id']
+                        albumInfo = ytmSession.get_album(albumId)
+                        if "releaseDate" in albumInfo:
+                            yearReleased = albumInfo["releaseDate"]["year"]
+                            if yearReleased in years:
+                                years[yearReleased] = years[yearReleased] + 1
+                            else:
+                                years[yearReleased] = 1
+            if ExcludeDislike and likeStatus is None:
                 likeStatus = getLikeStatus(ytmSession, firstSong)
             else:
                 likeStatus = "INDIFFERENT"
@@ -71,6 +85,24 @@ def getSongVideoIds(
                         "-", firstSong['title'], "\n")
             elif Verbose:
                 print("    Dislike: Song will not be included in playlist\n")
+            if mongodb:
+                songDocument = mongodb.songs.find_one_and_update(
+                    {"ytmusicId": videoId},
+                    {"$push": {"searchStrings": song}}
+                )
+                if songDocument is None:
+                    songId = mongodb.songs.insert_one(
+                        {
+                            "title": firstSong['title'],
+                            "artists": [
+                                artist['name']
+                                for artist in firstSong['artists']
+                            ],
+                            "album": firstSong['album']['name'],
+                            "ytmusicId": videoId,
+                            "searchStrings": [],
+                        }
+                    )
 
     if CollectPrimaryYear:
         primaryYear = max(years, key=lambda k: years[k])

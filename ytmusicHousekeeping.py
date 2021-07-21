@@ -3,12 +3,12 @@ from datetime import datetime
 from time import time, sleep
 from pymongo import MongoClient
 from secretsFile import mongoString, homeassistantToken, homeassistantUrl
-from scrobbleFunctions import ScrobbleCheck, GetLocationFromHomeAssistant, \
-    ScrobbleAddLocation
-from ytmusicFunctions import UpdateWXRTYesterday, \
-    CreateWXRTFlashback, \
-    UpdateCKPKYesterday, \
-    UpdateWKLQYesterday
+from scrobbleFunctions import ScrobbleCheck
+from scrobbleFunctions import GetLocationFromHomeAssistant
+from scrobbleFunctions import ScrobbleAddLocation
+from scrobbleFunctions import LinkScrobblerSong
+from ytmusicFunctions import UpdateWXRTYesterday, CreateWXRTFlashback
+from ytmusicFunctions import UpdateCKPKYesterday, UpdateWKLQYesterday
 import schedule
 from threading import Thread
 
@@ -68,6 +68,8 @@ while True:
                     scrobbleId,
                     location
                 )
+                LinkScrobblerSong(ytmusic, db, scrobbleId)
+
             if len(scrobbleIds) == 1:
                 suffix = ""
             else:
