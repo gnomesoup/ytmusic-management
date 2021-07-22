@@ -1,7 +1,7 @@
 from requests import get
 import lxml.html
 from ytmusicapi import YTMusic
-from ytmusicFunctions import getSongVideoIds
+from ytmusicFunctions import GetSongVideoIds
 
 year = "2021"
 month = "3"
@@ -23,7 +23,7 @@ for tr in trs[5:]:
         songsToAdd.append(tr[2].text_content().lower() + " " + tr[4].text_content().lower())
 
 songsToAdd.reverse()
-videoResults = getSongVideoIds(ytmusic, songsToAdd)
+videoResults = GetSongVideoIds(ytmusic, songsToAdd)
 
 newPlaylist = ytmusic.create_playlist(
     playlistTitle,

@@ -62,11 +62,10 @@ def GetLatestHistory(updatedHistory, history, scrobblerUser):
 
 def PostScrobble(db, request):
     result = db['scrobbles'].insert_one(request)
-    print(f"PostScrobble: {result=}")
     return {"scrobbleId": result.inserted_id, "videoId": request['videoId']}
 
 def GetSongId(ytmusic, db, videoId):
-    # try:
+    try:
         songDocument = db['songs'].find_one(
             {"ytmusicId": videoId},
             {"ytmusicId": 1}
@@ -84,14 +83,16 @@ def GetSongId(ytmusic, db, videoId):
             if "album" in songInfo:
                 documentData['album'] = songInfo['album']['name']
             if "likeStatus" in songInfo:
-                documentData['dislike'] = True if songInfo['likeStatus'] == \
-                    "DISLIKE" else False
-                documentData['like'] = True if songInfo['likeStatus'] == \
-                    "LIKE" else False
-            songDocument = db['songs'].insert_one(documentData)
-        return songDocument.inserted_id
-    # except Exception:
-        # return None
+                documentData['likeStatus'] = -1 if songInfo['likeStatus'] == \
+                    "DISLIKE" else 1 if songInfo['likeStatus'] == "LIKE" else 0
+            result = db['songs'].insert_one(documentData)
+            songId = result.inserted_id
+        else:
+            songId = songDocument['_id']
+        return songId
+    except Exception as e:
+        print(f"GetSongId Error: {e}")
+        return None
 
 def LinkScrobblerSong(ytmusic, db, _id):
     scrobbleDocument = db['scrobbles'].find_one(

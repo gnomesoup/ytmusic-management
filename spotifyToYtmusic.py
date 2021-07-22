@@ -2,7 +2,7 @@ from spotipy.oauth2 import SpotifyClientCredentials
 import spotipy
 from secretsFile import spotifyClientID, spotifyClientSecret
 from ytmusicapi import YTMusic
-from ytmusicFunctions import getSongVideoIds, UpdatePlaylist
+from ytmusicFunctions import GetSongVideoIds, UpdatePlaylist
 
 spotifyPlayistId = "3Cv4shCKUFpSnTRINIistD"
 
@@ -21,7 +21,7 @@ for track in spotifyPlaylist['tracks']['items']:
     artist = trackInfo['artists'][0]['name']
     songArtistSearchList.append(f"{title} {artist}")
 
-songsToAdd = getSongVideoIds(ytmusic, songArtistSearchList)
+songsToAdd = GetSongVideoIds(ytmusic, songArtistSearchList)
 playlistTitle = spotifyPlaylist['name']
 playlistDescription = "Imported from a spotify playlist\n{}"
 newPlaylist = ytmusic.create_playlist(

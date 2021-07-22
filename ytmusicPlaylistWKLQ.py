@@ -1,6 +1,6 @@
 import requests
 from ytmusicapi import YTMusic
-from ytmusicFunctions import getSongVideoIds
+from ytmusicFunctions import GetSongVideoIds
 
 date = "2021-01-29"
 url = "http://wklq.tunegenie.com/api/v1/brand/nowplaying/?" +\
@@ -29,7 +29,7 @@ for song in songList:
     searchTerm = (song['artist'] + " " + song['song'])
     songsToAdd.append(searchTerm)
 
-videoResults = getSongVideoIds(ytmusic, songsToAdd)
+videoResults = GetSongVideoIds(ytmusic, songsToAdd)
 
 newPlaylist = ytmusic.create_playlist(
     playlistTitle,
