@@ -1,4 +1,5 @@
 import re
+from ytmusicFunctions import GetLikeStatus
 import requests
 from datetime import datetime, timedelta
 
@@ -72,6 +73,7 @@ def GetSongId(ytmusic, db, videoId):
         )
         if songDocument is None:
             watchPlaylist = ytmusic.get_watch_playlist(videoId)
+            browseId = None
             songInfo = watchPlaylist['tracks'][0]
             documentData = {
                     "title": songInfo['title'],
@@ -82,9 +84,10 @@ def GetSongId(ytmusic, db, videoId):
                 }
             if "album" in songInfo:
                 documentData['album'] = songInfo['album']['name']
-            if "likeStatus" in songInfo:
-                documentData['likeStatus'] = -1 if songInfo['likeStatus'] == \
-                    "DISLIKE" else 1 if songInfo['likeStatus'] == "LIKE" else 0
+                browseId = songInfo['album']['id']
+            likeStatus = GetLikeStatus(ytmusic, videoId, browseId, db)
+            if likeStatus:
+                documentData['likeStatus'] = likeStatus.value
             result = db['songs'].insert_one(documentData)
             songId = result.inserted_id
         else:

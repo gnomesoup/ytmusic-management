@@ -2,7 +2,7 @@ from ytmusicapi import YTMusic
 from pymongo import MongoClient
 from secretsFile import mongoString
 from datetime import date, timedelta
-from ytmusicFunctions import GetSongVideoId, UpdatePlaylist
+from ytmusicFunctions import GetLikeStatus, GetSongVideoId, LikeStatus, UpdatePlaylist
 
 def UpdateWKLQYesterday(
     ytmusic: YTMusic, playlistId:str, mongodb:MongoClient=None
@@ -36,10 +36,15 @@ def UpdateWKLQYesterday(
         song for song in songsToAdd if song not in uniqueSongs
     ]
 
+    videoResults = []
     for song in uniqueSongs:
         videoId, browseId, songId = GetSongVideoId(
             ytmusic, song, mongodb=mongodb
         )
+        if GetLikeStatus(
+            ytmusic, videoId, browseId, db
+        ) is not LikeStatus.DISLIKE:
+            videoResults.append(videoId)
         
     return UpdatePlaylist(ytmusic, playlistId, videoResults)
 

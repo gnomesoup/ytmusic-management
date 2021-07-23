@@ -8,7 +8,8 @@ from scrobbleFunctions import GetLocationFromHomeAssistant
 from scrobbleFunctions import ScrobbleAddLocation
 from scrobbleFunctions import LinkScrobblerSong
 from ytmusicFunctions import UpdateWXRTYesterday, CreateWXRTFlashback
-from ytmusicFunctions import UpdateCKPKYesterday, UpdateWKLQYesterday
+from ytmusicFunctions import UpdateCKPKYesterday
+from ytmusicPlaylistWKLQyesterday import UpdateWKLQYesterday
 import schedule
 from threading import Thread
 
