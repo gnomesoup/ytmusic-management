@@ -1,11 +1,14 @@
+from pymongo.database import Database
 from ytmusicapi import YTMusic
 from pymongo import MongoClient
 from secretsFile import mongoString
 from datetime import date, timedelta
-from ytmusicFunctions import GetLikeStatus, GetSongVideoId, LikeStatus, UpdatePlaylist
+from ytmusicFunctions import GetLikeStatus, GetSongVideoId
+from ytmusicFunctions import LikeStatus, UpdatePlaylist
+from requests import get
 
 def UpdateWKLQYesterday(
-    ytmusic: YTMusic, playlistId:str, mongodb:MongoClient=None
+    ytmusic: YTMusic, playlistId:str, mongodb:Database=None
 ):
     # Get data from the internet
     searchDate = date.today() - timedelta(days=1)
@@ -39,7 +42,7 @@ def UpdateWKLQYesterday(
     videoResults = []
     for song in uniqueSongs:
         videoId, browseId, songId = GetSongVideoId(
-            ytmusic, song, mongodb=mongodb
+            ytmusic, song, db=mongodb
         )
         if GetLikeStatus(
             ytmusic, videoId, browseId, db

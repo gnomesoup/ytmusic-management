@@ -1,7 +1,6 @@
 from enum import Enum
-from scrobbleFunctions import GetSongId
+from bson.objectid import ObjectId
 from pymongo.database import Database
-from pymongo.mongo_client import MongoClient
 from requests import get
 from lxml import html
 from datetime import date, datetime, timedelta
@@ -15,6 +14,38 @@ def GetDetailedSongData(ytmusic:YTMusic, videoId:str) -> dict:
     if watchPlaylist:
         songData = watchPlaylist['tracks'][0]
     return songData
+
+def GetSongId(ytmusic:YTMusic, db:Database, videoId:str) -> ObjectId:
+    try:
+        songDocument = db['songs'].find_one(
+            {"ytmusicId": videoId},
+            {"ytmusicId": 1}
+        )
+        if songDocument is None:
+            watchPlaylist = ytmusic.get_watch_playlist(videoId)
+            browseId = None
+            songInfo = watchPlaylist['tracks'][0]
+            documentData = {
+                    "title": songInfo['title'],
+                    "artists": [
+                        artist['name'] for artist in songInfo['artists']
+                    ],
+                    "ytmusicId": songInfo['videoId']
+                }
+            if "album" in songInfo:
+                documentData['album'] = songInfo['album']['name']
+                browseId = songInfo['album']['id']
+            likeStatus = GetLikeStatus(ytmusic, videoId, browseId, db)
+            if likeStatus:
+                documentData['likeStatus'] = likeStatus.value
+            result = db['songs'].insert_one(documentData)
+            songId = result.inserted_id
+        else:
+            songId = songDocument['_id']
+        return songId
+    except Exception as e:
+        print(f"GetSongId Error: {e}")
+        return None
 
 class LikeStatus(Enum):
     LIKE = 1
