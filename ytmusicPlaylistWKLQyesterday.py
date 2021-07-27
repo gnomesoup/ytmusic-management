@@ -3,12 +3,11 @@ from ytmusicapi import YTMusic
 from pymongo import MongoClient
 from secretsFile import mongoString
 from datetime import date, timedelta
-from ytmusicFunctions import GetLikeStatus, GetSongVideoId
-from ytmusicFunctions import LikeStatus, UpdatePlaylist
+from ytmusicFunctions import YesterdayPlaylistsUpdate
 from requests import get
 
 def UpdateWKLQYesterday(
-    ytmusic: YTMusic, playlistId:str, mongodb:Database=None
+    ytmusic: YTMusic, playlistId:str, db:Database=None
 ):
     # Get data from the internet
     searchDate = date.today() - timedelta(days=1)
@@ -29,27 +28,12 @@ def UpdateWKLQYesterday(
     rJson = r.json()
     songList = rJson['response']
 
-    songsToAdd = []
-    for song in songList:
-        searchTerm = (song['artist'] + " " + song['song'])
-        songsToAdd.append(searchTerm)
-
-    uniqueSongs = []
-    uniqueSongs = [
-        song for song in songsToAdd if song not in uniqueSongs
+    songsToAdd =[ 
+        song['artist'] + " " + song['song']
+        for song in songList
     ]
 
-    videoResults = []
-    for song in uniqueSongs:
-        videoId, browseId, songId = GetSongVideoId(
-            ytmusic, song, db=mongodb
-        )
-        if GetLikeStatus(
-            ytmusic, videoId, browseId, db
-        ) is not LikeStatus.DISLIKE:
-            videoResults.append(videoId)
-        
-    return UpdatePlaylist(ytmusic, playlistId, videoResults)
+    YesterdayPlaylistsUpdate(ytmusic, db, playlistId, songsToAdd)
 
 if __name__ == "__main__":
 
@@ -59,7 +43,8 @@ if __name__ == "__main__":
     mongoClient = MongoClient(mongoString)
     db = mongoClient['scrobble']
 
-    if UpdateWKLQYesterday(ytmusic, playlistId, mongodb=db):
-        print("Playlist update successful")
-    else:
-        print("Error updating playlist")
+    # try: 
+    UpdateWKLQYesterday(ytmusic, playlistId, db=db)
+    print("Playlist update successful")
+    # except Exception:
+    #     print("Error updating playlist")

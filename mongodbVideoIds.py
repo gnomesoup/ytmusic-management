@@ -5,6 +5,7 @@ from scrobbleFunctions import GetSongId
 from ytmusicapi import YTMusic
 from ytmusicFunctions import GetSongVideoIds, UpdatePlaylist, GetSongVideoId, GetLikeStatus
 from ytmusicFunctions import LikeStatus
+import datetime
 
 def GetSongTitle(mongodatabase, videoId):
     document = mongodatabase.find_one(
@@ -32,15 +33,16 @@ scrobbles = db['scrobbles']
 songs = db['songs']
 keysToUpdate = ["artists", "likeStatus", "album", "year"]
 
-query = {"likeStatus": {"$lt": 1}}
-skipCount = 8000
-songCount = songs.count_documents(query)
+query = {"time": {"$gt": datetime.datetime(2021, 7, 24)}}
+skipCount = 0
+songCount = scrobbles.count_documents(query)
 print(f"{songCount=}")
 # album = ytmusic.get_album('MPREb_eHkCHZP1e16')
 # videoId, browseId, songId = GetSongVideoId(
 #     ytmusic, "pretenders don't get me wrong", None, True
 # )
 # print(GetLikeStatus(ytmusic, videoId, None, db=None, verbose=True))
+exit()
 n = skipCount 
 for song in songs.find(query, skip=skipCount):
     likeStatus = None

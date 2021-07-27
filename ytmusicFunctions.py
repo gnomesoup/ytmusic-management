@@ -112,7 +112,7 @@ def GetSongVideoId(
     songSearchString:str,
     db:Database=None,
     verbose:bool=False
-) -> list[str, str, str]:
+):
     if not songSearchString:
         if verbose:
             print(
@@ -127,7 +127,12 @@ def GetSongVideoId(
     songId = None
     if db:
         songDocument = db['songs'].find_one(
-            {"searchString": {"$regex": searchStringLower, "$options": "i"}},
+            {
+                "searchString": {
+                    "$regex": re.escape(searchStringLower),
+                    "$options": "i"
+                }
+            },
             projection={"ytmusicId": 1}
         ) 
         if songDocument:
@@ -167,7 +172,7 @@ def GetSongVideoIds(
     ExcludeDislike:bool=True,
     CollectPrimaryYear:bool=False,
     Verbose:bool=False,
-    mongodb=None
+    db=None
 ):
     if not SongNameArtistList:
         return
@@ -188,8 +193,8 @@ def GetSongVideoIds(
         year = None
         if "john c mellencamp" in song.lower():
             song = song.lower().replace("john c mellencamp", "john mellencamp")
-        if mongodb:
-            songDocument = mongodb.songs.find_one(
+        if db:
+            songDocument = db.songs.find_one(
                 {"searchStrings": song},
                 projection={"ytmusicId": 1, "likeStatus": 1, "year": 1}
             )
@@ -231,8 +236,8 @@ def GetSongVideoIds(
                     "-", firstSong['title'], "\n")
         elif Verbose:
             print("    Dislike: Song will not be included in playlist\n")
-        if mongodb:
-            songDocument = mongodb.songs.find_one_and_update(
+        if db:
+            songDocument = db.songs.find_one_and_update(
                 {"ytmusicId": videoId},
                 {"$push": {"searchStrings": song}}
             )
@@ -248,7 +253,7 @@ def GetSongVideoIds(
                     }
                 if "album" in firstSong:
                     documentData['album'] = firstSong['album']['name']
-                mongodb.songs.insert_one(documentData)
+                db.songs.insert_one(documentData)
 
     if CollectPrimaryYear:
         primaryYear = max(years, key=lambda k: years[k])
@@ -261,13 +266,87 @@ def GetSongVideoIds(
             "matchedCount": len(videoIds),
             "primaryYear": primaryYear}
 
+def ClearPlaylist(ytmusic:YTMusic, playlistId:str) -> str:
+    currentPlaylist = ytmusic.get_playlist(
+        playlistId, limit=1
+    )
+    if currentPlaylist['trackCount'] > 0:
+        return ytmusic.remove_playlist_items(
+            playlistId, currentPlaylist['tracks']
+        )
+    else:
+        return
+
+def AddToPlaylist(
+    ytmusic:YTMusic, playlistId:str, videoId:str
+) -> bool:
+    status = ytmusic.add_playlist_items(
+        playlistId, videoIds=[videoId]
+    )
+    if status['status'] == "STATUS_SUCCEEDED":
+        return True
+    else:
+        return False
+
+def YesterdayPlaylistsUpdate(
+    ytmusic:YTMusic, db:Database, playlistId:str, SongArtistSearch:list
+) -> None:
+    originalSongCount = len(SongArtistSearch)
+    uniqueSongs = []
+    uniqueSongs = [
+        song for song in SongArtistSearch if song not in uniqueSongs
+    ]
+
+    videoIds = []
+    for song in uniqueSongs:
+        videoId, browseId, songId = GetSongVideoId(
+            ytmusic, song, db=db
+        )
+        if GetLikeStatus(
+            ytmusic, videoId, browseId, db
+        ) is not LikeStatus.DISLIKE:
+            videoIds.append(videoId)
+
+    ClearPlaylist(ytmusic, playlistId)
+    results = [
+        AddToPlaylist(ytmusic, playlistId, videoId) 
+        for videoId in videoIds
+    ]
+    YesterdayPlaylistsDescription(
+        ytmusic,
+        playlistId,
+        originalSongCount,
+        len(uniqueSongs),
+        sum(results)
+    )
+
+def YesterdayPlaylistsDescription(
+    ytmusic:YTMusic,
+    playlistId:str,
+    searchCount:int,
+    uniqueCount:int, 
+    matchedCount:int
+) -> str:
+    nowFormatted = datetime.now().strftime(
+        "%Y-%m-%d at %H:%M"
+    )
+    description = (
+        f"Last updated {nowFormatted}.\nStation played "
+        f"{searchCount} songs.\n"
+        f"{uniqueCount} songs were unique.\n"
+        f"YTMusic match {matchedCount} songs."
+        f"\n\nNote: Songs I've marked as "
+        f"\"dislike\" were not included in the playlist."
+    )
+    return ytmusic.edit_playlist(playlistId, description=description)
+
 def UpdatePlaylist(
-    ytmusic,
-    playlistId,
+    ytmusic:YTMusic,
+    playlistId:str,
     videoResults,
-    description=None,
-    excludeDisliked=True,
-    clearPlaylist=True
+    description=str,
+    excludeDisliked=bool,
+    clearPlaylist=bool
 ):
     try:
         currentSongCount = ytmusic.get_playlist(
@@ -315,34 +394,6 @@ def UpdatePlaylist(
     else:
         print("There was an error adding songs to the playlist.")
         return False
-
-def UpdateWXRTYesterday(ytmusic, playlistId):
-    """
-    Collect playlist data on WXRT from yesterday and import it to
-    a YouTube Music playlist. Returns true if successful. Returns
-    False if playlist could not be updated.
-    """
-
-    yesterday = date.today() - timedelta(days=1)
-    yesterdayFormatted = "{dt.month}%2F{dt.day}%2F{dt.year}" \
-        .format(dt = yesterday)
-
-    url = "http://www.mediabase.com/whatsong/whatsong.asp?var_s=087088082084045070077&MONDTE="\
-        + yesterdayFormatted
-
-    page = get(url)
-    doc = html.fromstring(page.content)
-    trs = doc.xpath('//tr')
-
-    songsToAdd = []
-    for tr in trs[5:]:
-        if len(tr) == 6:
-            songsToAdd.append(tr[2].text_content().lower() + " " + tr[4].text_content().lower())
-
-    songsToAdd.reverse()
-    videoResults = GetSongVideoIds(ytmusic, songsToAdd)
-
-    return UpdatePlaylist(ytmusic, playlistId, videoResults)
 
 def CreateWXRTFlashback(ytmusic, playlistDate=None):
     if playlistDate is None:
