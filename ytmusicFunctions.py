@@ -266,6 +266,13 @@ def GetSongVideoIds(
             "matchedCount": len(videoIds),
             "primaryYear": primaryYear}
 
+def GetPlaylistTrackCount(ytmusic:YTMusic, playlistId:str) -> int:
+    currentPlaylist = ytmusic.get_playlist(playlistId, limit=1)
+    if "trackCount" in currentPlaylist:
+        return currentPlaylist['trackCount']
+    else:
+        return False
+
 def ClearPlaylist(ytmusic:YTMusic, playlistId:str) -> str:
     currentPlaylist = ytmusic.get_playlist(
         playlistId, limit=1
@@ -319,6 +326,10 @@ def YesterdayPlaylistsUpdate(
         len(uniqueSongs),
         sum(results)
     )
+    if GetPlaylistTrackCount(ytmusic, playlistId=playlistId) == sum(results):
+        return True
+    else:
+        return False
 
 def YesterdayPlaylistsDescription(
     ytmusic:YTMusic,

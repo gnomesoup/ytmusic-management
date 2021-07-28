@@ -8,8 +8,12 @@ from requests import get
 
 def UpdateWKLQYesterday(
     ytmusic: YTMusic, playlistId:str, db:Database=None
-):
-    # Get data from the internet
+) -> bool:
+    """
+    Collect playlist data on WKLQ from yesterday and import it to
+    a YouTube Music playlist. Returns true if successful. Returns
+    False if playlist could not be updated.
+    """
     searchDate = date.today() - timedelta(days=1)
     searchDate = searchDate.strftime("%Y-%m-%d")
     url = "http://wklq.tunegenie.com/api/v1/brand/nowplaying/?" +\
@@ -33,7 +37,7 @@ def UpdateWKLQYesterday(
         for song in songList
     ]
 
-    YesterdayPlaylistsUpdate(ytmusic, db, playlistId, songsToAdd)
+    return YesterdayPlaylistsUpdate(ytmusic, db, playlistId, songsToAdd)
 
 if __name__ == "__main__":
 

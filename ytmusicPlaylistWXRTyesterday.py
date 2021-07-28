@@ -7,7 +7,9 @@ from datetime import date, timedelta
 import requests
 from lxml import html
 
-def UpdateWXRTYesterday(ytmusic:YTMusic, db:Database, playlistId:str) -> None:
+def UpdateWXRTYesterday(
+    ytmusic:YTMusic, playlistId:str, db:Database=None
+) -> bool:
     """
     Collect playlist data on WXRT from yesterday and import it to
     a YouTube Music playlist. Returns true if successful. Returns
@@ -31,7 +33,7 @@ def UpdateWXRTYesterday(ytmusic:YTMusic, db:Database, playlistId:str) -> None:
             songsToAdd.append(tr[2].text_content().lower() + " " + tr[4].text_content().lower())
 
     songsToAdd.reverse()
-    YesterdayPlaylistsUpdate(ytmusic, db, playlistId, songsToAdd)
+    return YesterdayPlaylistsUpdate(ytmusic, db, playlistId, songsToAdd)
 
 
 if __name__ == "__main__":
@@ -42,7 +44,7 @@ if __name__ == "__main__":
     mongoClient = MongoClient(mongoString)
     db = mongoClient['scrobble']
 
-    UpdateWXRTYesterday(ytmusic, db, playlistId)
+    UpdateWXRTYesterday(ytmusic, playlistId, db)
     #     print("Playlist update successful")
     # else:
     #     print("Error updating playlist")
