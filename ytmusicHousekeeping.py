@@ -1,21 +1,22 @@
 from types import FunctionType
 import dataclasses
+import time
 from bson.objectid import ObjectId
 from pymongo.collection import Collection, ReturnDocument
 from pymongo.database import Database
 from pymongo import DESCENDING
 from ytmusicapi import YTMusic
 from datetime import datetime
-import time
 from pymongo import MongoClient
 from secretsFile import mongoString, homeassistantToken, homeassistantUrl
+from ytmusicFunctions import GetSongId
 from ytmusicFunctions import CreateWXRTFlashback
 from ytmusicFunctions import UpdateCKPKYesterday
 from ytmusicPlaylistWKLQyesterday import UpdateWKLQYesterday
 from ytmusicPlaylistWXRTyesterday import UpdateWXRTYesterday
 import schedule
 from threading import Thread
-import re
+import requests
 
 def runThreaded(function:FunctionType, name:str):
     print(
@@ -32,6 +33,15 @@ def runThreaded(function:FunctionType, name:str):
 #     artists = list
 #     album = str
 
+def KeyCheck(key, documentData, ytmusicData):
+    if key not in documentData:
+        if key in ytmusicData:
+            return True
+        else:
+            return False
+    else:
+        return False
+
 def GetScrobblerHistory(dbCollection:Collection, scrobblerUser:str) -> list:
     history = []
     scrobblerInfo = dbCollection.find_one(
@@ -43,69 +53,26 @@ def GetScrobblerHistory(dbCollection:Collection, scrobblerUser:str) -> list:
         history = scrobblerInfo['videoIds']
     return history
 
-def GetLatestHistory(
-    updatedHistory:list, history:list, scrobblerUser:str
-) -> list:
-    '''
-    Compare the latest YouTube Music history with a previously pulled
-    dictionary of history.
-    '''
-
-    newHistory = []
-    for song in updatedHistory:
-        # if song['played'] in ["Today"]:
-        if "release" in song:
-            release = song['release']
-        if song['played'] in ["Today", "Yesterday"]:
-            artists = [artist['name'] for artist in song['artists']]
-            try:
-                album = song['album']['name']
-            except Exception:
-                album = None
-            newHistory.append({
-                "videoId": song['videoId'],
-                "title": song['title'],
-                "artists": artists,
-                "album": album,
-                "played": song['played'],
-                "duration": song['duration']
-            })
-
-    if history:
-        currentIndex = 0
-        matchStartIndex = 0
-        lastId = None
-        for i in range(len(newHistory)):
-            currentId = newHistory[i]['videoId']
-            if newHistory[i]['videoId'] == history[currentIndex]:
-                if currentId != lastId:
-                    currentIndex = currentIndex + 1
-                    lastId = currentId
-                    break
-            else:
-                matchStartIndex = i + 1
-    regex = re.compile(r"(?P<minutes>\d+):(?P<seconds>\d+)")
-    now = datetime.now()
-    songDurations = timedelta(seconds=0)
-    postCount = 0
-    newRequests = []
-    for song in reversed(newHistory[0:matchStartIndex]):
-        requestData = {
-            "artists": song['artists'],
-            "title": song['title'],
-            "album": song['album'],
-            "source": "YouTube Music",
-            "time": datetime.utcnow(),
-            "user": scrobblerUser,
-            "videoId": song['videoId']
-            }
-        newRequests.append(requestData)
-
-    return newHistory, newRequests
+def BuildRequest(ytmusicHistoryItem:dict, user:str) -> dict:
+    artists = [artist['name'] for artist in ytmusicHistoryItem['artists']]
+    try:
+        album = ytmusicHistoryItem['album']['name']
+    except Exception:
+        album = None
+    return {
+        "time": datetime.utcnow(),
+        "videoId": ytmusicHistoryItem['videoId'],
+        "title": ytmusicHistoryItem['title'],
+        "artists": artists,
+        "album": album,
+        "played": ytmusicHistoryItem['played'],
+        "duration": ytmusicHistoryItem['duration'],
+        "user": user
+    }
 
 def PostScrobble(db:Database, request:dict) -> dict:
     result = db['scrobbles'].insert_one(request)
-    return {"scrobbleId": result.inserted_id, "videoId": request['videoId']}
+    return result.inserted_id
 
 def LinkScrobblerSong(
     ytmusic:YTMusic, db:Database, scrobbleId:ObjectId
@@ -152,78 +119,7 @@ def ScrobbleAddLocation(
         {"$set": {"location": location}}
     )
 
-def ScrobbleCheck(ytmusic:YTMusic, db:Database, scrobblerUser:str) -> list:
-    if not hasattr(ScrobbleCheck, "queuedRequests"):
-        ScrobbleCheck.queuedRequests = []
-    if not hasattr(ScrobbleCheck, "requestAttempts"):
-        ScrobbleCheck.requestAttempts = 0
-    updatedHistory = {}
-    setVariables = {}
-    scrobbleIds = {}
-
-    # Get previous scrobble history
-    history = GetScrobblerHistory(db['scrobblers'], scrobblerUser)
-    if not history:
-        updatedHistory = ytmusic.get_history()
-        setVariables['videoIds'] = [item['videoId'] for item in updatedHistory]
-    else:
-        requestsReady = False
-        while not requestsReady:
-            updatedHistory = ytmusic.get_history()
-            updatedHistory, newRequests = GetLatestHistory(
-                updatedHistory,
-                history,
-                scrobblerUser
-            )
-            if len(newRequests) > 2 and ScrobbleCheck.requestAttempts < 4:
-                print(
-                    f"{datetime.now().isoformat()}  Too many requests!"
-                    f"history: {len(history)} "
-                    f"updatedHistory: {len(updatedHistory)} "
-                    f"attempts: {ScrobbleCheck.requestAttempts}"
-                )
-                ScrobbleCheck.requestAttempts += 1
-                print("requestAttempt:", ScrobbleCheck.requestAttempts)
-            else:
-                ScrobbleCheck.requestAttempts = 0
-                requestsReady = True
-        if requestsReady:
-            if ScrobbleCheck.queuedRequests:
-                ScrobbleCheck.queuedRequests += newRequests
-            else:
-                ScrobbleCheck.queuedRequests = newRequests
-            if ScrobbleCheck.queuedRequests:
-                postResult = [
-                    PostScrobble(db, request)
-                    for request in ScrobbleCheck.queuedRequests
-                ]
-                postedVideoIds = [
-                    request['videoId'] for request in postResult
-                ]
-                scrobbleIds = [
-                    request['scrobbleId'] for request in postResult
-                ]
-                ScrobbleCheck.queuedRequests = [
-                    request for request in ScrobbleCheck.queuedRequests
-                    if request['videoId'] not in postedVideoIds
-                ]
-            if updatedHistory:
-                videoIds = [item['videoId'] for item in updatedHistory]
-                setVariables["videoIds"] = videoIds
-    setVariables["lastUpdate"] = datetime.utcnow()
-    db['scrobblers'].update_one(
-        {
-            "name": "ytmusic history scrobbler",
-            "user": scrobblerUser
-        },
-        {
-            "$set": setVariables
-        }
-    )
-    return scrobbleIds
-
-def YTMusicScrobble(ytmusic:YTMusic, connectionString:str):
-    print("YTMusicScrobble")
+def YTMusicScrobble(ytmusic:YTMusic, connectionString:str, user:str):
     mongoClient = MongoClient(connectionString)
     db = mongoClient['scrobble']
     scrobblerData = {
@@ -233,74 +129,55 @@ def YTMusicScrobble(ytmusic:YTMusic, connectionString:str):
         "requestAttempts": 0
     }
 
-    last200Scrobbles = db['scrobbles'].find(
+    lastScrobbles = db['scrobbles'].find(
         {
             "user": scrobblerData['scrobblerUser']
         },
         projection={"videoId": 1}
-    ).sort("_id", DESCENDING).limit(200)
-    last200videoIds = [scrobble['videoId'] for scrobble in last200Scrobbles]
-    scrobblerHistory = GetScrobblerHistory(
-        db['scrobblers'], scrobblerData['scrobblerUser']
-    )
-    ytmusicHistory = None
-    while ytmusicHistory is None:
-        print("Trying to get history")
-        ytmusicHistory = ytmusic.get_history()
-    historyVideoIds = [track['videoId'] for track in ytmusicHistory]
-    print(len(historyVideoIds))
-    unscrobbled = []
+    ).sort("time", DESCENDING).limit(5)
+    lastScrobbleIds = [scrobble['videoId'] for scrobble in lastScrobbles]
     matchStartIndex = 0
-    for i, videoId in enumerate(historyVideoIds):
-        if scrobblerHistory[matchStartIndex] != videoId:
-            matchStartIndex += 1
-            unscrobbled.append(videoId)
-
-    return
-
-    try:
-        scrobbleIds = ScrobbleCheck(ytmusic, db, scrobblerData['scrobblerUser'])
-        if scrobbleIds:
-            location = GetLocationFromHomeAssistant(
-                homeassistantUrl,
-                homeassistantToken,
-                "person.michael",
-            )
-            for scrobbleId in scrobbleIds:
-                ScrobbleAddLocation(
-                    db['scrobbles'],
-                    scrobbleId,
-                    location
+    for i in range(4):
+        ytmusicHistory = ytmusic.get_history()
+        if len(ytmusicHistory) == 0:
+            return
+        historyVideoIds = [track['videoId'] for track in ytmusicHistory]
+        endIndex = len(lastScrobbleIds)
+        for i in range(len(historyVideoIds)):
+            historySublist = historyVideoIds[i:i+endIndex]
+            if historySublist == lastScrobbleIds:
+                matchStartIndex = i
+                break
+        if matchStartIndex < 1:
+            return
+        elif matchStartIndex < 2:
+            break
+        else:
+            print(f"Large number of scrobbles: {matchStartIndex}")
+    location = None
+    for i in reversed(range(matchStartIndex)):
+        request = BuildRequest(ytmusicHistory[i], user)
+        scrobbleId = PostScrobble(db, request)
+        if scrobbleId:
+            if location is None:
+                location = GetLocationFromHomeAssistant(
+                    homeassistantUrl,
+                    homeassistantToken,
+                    "person.michael",
                 )
-                LinkScrobblerSong(ytmusic, db, scrobbleId)
-
-            if len(scrobbleIds) == 1:
-                suffix = ""
-            else:
-                suffix = "s"
-            print(
-                f"{datetime.now().isoformat()}  "
-                f"Posted {len(scrobbleIds)} scrobble{suffix}"
+            ScrobbleAddLocation(
+                db['scrobbles'],
+                scrobbleId,
+                location
             )
-    except Exception as e:
-        print(
-            f"{datetime.now().isoformat()}  "
-            f"Scrobble error: {e}"
-        )
-    
-    try:
-        schedule.run_pending()
-    except Exception as e:
-        print( 
-            f"{datetime.now().isoformat()}  "
-            f"Schedule error: {e}"
-        )
-
-
+            LinkScrobblerSong(ytmusic, db, scrobbleId)
+            print(f"{datetime.now().isoformat()}  Posted Scrobble")
+    return
 
 if __name__ == "__main__":
     print("YouTube Music Housekeeping")
     ytmusic = YTMusic("headers_auth.json")
+    user = "michael"
     schedule.every().day.at("00:00").do(
         runThreaded,
         lambda: UpdateWXRTYesterday(ytmusic, "PLJpUfuX6t6dSaHuu1oeQHWhmMTM6G_hKw"),
@@ -323,11 +200,16 @@ if __name__ == "__main__":
     )
     schedule.every().minute.do(
         runThreaded,
-        lambda: YTMusicScrobble(ytmusic, mongoString),
+        lambda: YTMusicScrobble(ytmusic, mongoString, user),
         "Check for and add ytmusic scrobbles"
     )
-
-    YTMusicScrobble(ytmusic, mongoString)
-    # while True:
-    #     schedule.run_pending()
-    #     time.sleep(1)
+    YTMusicScrobble(ytmusic, mongoString, user)
+    while True:
+        try:
+            schedule.run_pending()
+        except Exception as e:
+            print( 
+                f"{datetime.now().isoformat()}  "
+                f"Schedule error: {e}"
+            )
+        time.sleep(1)

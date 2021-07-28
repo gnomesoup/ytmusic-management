@@ -1,11 +1,14 @@
+from ytmusicHousekeeping import ScrobbleAddLocation
 from pymongo import DESCENDING, MongoClient
 from secretsFile import mongoString
+from secretsFile import homeassistantToken, homeassistantUrl
 from dateutil import parser, tz
 from scrobbleFunctions import GetSongId
 from ytmusicapi import YTMusic
 from ytmusicFunctions import GetSongVideoIds, UpdatePlaylist, GetSongVideoId, GetLikeStatus
 from ytmusicFunctions import LikeStatus
 import datetime
+import requests
 
 def GetSongTitle(mongodatabase, videoId):
     document = mongodatabase.find_one(
@@ -33,29 +36,54 @@ scrobbles = db['scrobbles']
 songs = db['songs']
 keysToUpdate = ["artists", "likeStatus", "album", "year"]
 
-query = {"time": {"$gt": datetime.datetime(2021, 7, 24)}}
+query = {
+    "location": {"$exists": False},
+    "time": {"$gt": datetime.datetime(2021, 7, 20)}
+}
 skipCount = 0
 songCount = scrobbles.count_documents(query)
 print(f"{songCount=}")
-# album = ytmusic.get_album('MPREb_eHkCHZP1e16')
-# videoId, browseId, songId = GetSongVideoId(
-#     ytmusic, "pretenders don't get me wrong", None, True
-# )
-# print(GetLikeStatus(ytmusic, videoId, None, db=None, verbose=True))
+locationEntity = "person.michael"
+for scrobble in scrobbles.find(query):
+    scrobbleTime = (scrobble['time']).strftime("%Y-%m-%dT%H:%M:%S")
+    homeassistantResult = requests.get(
+        f"{homeassistantUrl}/api/history/period/{scrobbleTime}"
+        f"?filter_entity_id={locationEntity}&minimal_response",
+        headers={
+            "Authorization": "Bearer " + homeassistantToken,
+            "Content-Type": "application/json"
+        }
+    )
+    homeassistantData = homeassistantResult.json()
+    data = homeassistantData[0][0]
+    
+    location = {
+        "type": "Point",
+        "coordinates": [
+            data["attributes"]["longitude"],
+            data["attributes"]["latitude"]
+        ]
+    }
+    ScrobbleAddLocation(db['scrobbles'], scrobble["_id"], location)
 exit()
-n = skipCount 
-for song in songs.find(query, skip=skipCount):
-    likeStatus = None
-    videoId = song['ytmusicId']
-    likeStatus = GetLikeStatus(ytmusic, videoId, None)
-    if likeStatus:
-        songId = song['_id']
-        songs.update_one(
-            {"_id": songId}, {"$set": {"likeStatus": likeStatus.value}}
-        )
-    n += 1
-    if n % 100 == 0:
-        print(f"{n}/{songCount}")
+# # album = ytmusic.get_album('MPREb_eHkCHZP1e16')
+# # videoId, browseId, songId = GetSongVideoId(
+# #     ytmusic, "pretenders don't get me wrong", None, True
+# # )
+# # print(GetLikeStatus(ytmusic, videoId, None, db=None, verbose=True))
+# n = skipCount 
+# for song in songs.find(query, skip=skipCount):
+#     likeStatus = None
+#     videoId = song['ytmusicId']
+#     likeStatus = GetLikeStatus(ytmusic, videoId, None)
+#     if likeStatus:
+#         songId = song['_id']
+#         songs.update_one(
+#             {"_id": songId}, {"$set": {"likeStatus": likeStatus.value}}
+#         )
+#     n += 1
+#     if n % 100 == 0:
+#         print(f"{n}/{songCount}")
 
 #     ytmusicSongInfo = None
 #     for key in keysToUpdate:
