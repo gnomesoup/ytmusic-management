@@ -42,17 +42,6 @@ def KeyCheck(key, documentData, ytmusicData):
     else:
         return False
 
-def GetScrobblerHistory(dbCollection:Collection, scrobblerUser:str) -> list:
-    history = []
-    scrobblerInfo = dbCollection.find_one(
-        {
-            "name": "ytmusic history scrobbler",
-            "user": scrobblerUser
-        })
-    if "videoIds" in scrobblerInfo:
-        history = scrobblerInfo['videoIds']
-    return history
-
 def BuildRequest(ytmusicHistoryItem:dict, user:str) -> dict:
     artists = [artist['name'] for artist in ytmusicHistoryItem['artists']]
     try:
@@ -65,7 +54,6 @@ def BuildRequest(ytmusicHistoryItem:dict, user:str) -> dict:
         "title": ytmusicHistoryItem['title'],
         "artists": artists,
         "album": album,
-        "played": ytmusicHistoryItem['played'],
         "duration": ytmusicHistoryItem['duration'],
         "user": user
     }
@@ -119,7 +107,7 @@ def ScrobbleAddLocation(
         {"$set": {"location": location}}
     )
 
-def YTMusicScrobble(ytmusic:YTMusic, connectionString:str, user:str):
+def YTMusicScrobble(ytmusic:YTMusic, connectionString:str, user:str) -> None:
     mongoClient = MongoClient(connectionString)
     db = mongoClient['scrobble']
     scrobblerData = {
@@ -198,10 +186,10 @@ if __name__ == "__main__":
         lambda: CreateWXRTFlashback(ytmusic),
         "WXRT_Saturday_Morning_Flashback"
     )
-    schedule.every().minute.do(
+    schedule.every().minute.at(":00").do(
         runThreaded,
         lambda: YTMusicScrobble(ytmusic, mongoString, user),
-        "Check for and add ytmusic scrobbles"
+        "Scrobble YTMusic"
     )
     YTMusicScrobble(ytmusic, mongoString, user)
     while True:
