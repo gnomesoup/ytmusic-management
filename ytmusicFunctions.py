@@ -1,12 +1,9 @@
 from enum import Enum
 from bson.objectid import ObjectId
 from pymongo.database import Database
-from requests import get
-from lxml import html
-from datetime import date, datetime, timedelta
+from datetime import datetime
 import re
 from ytmusicapi import YTMusic
-from ytmusicapi.parsers import watch
 
 def GetDetailedSongData(ytmusic:YTMusic, videoId:str) -> dict:
     songData = None
@@ -267,17 +264,16 @@ def GetSongVideoIds(
             "primaryYear": primaryYear}
 
 def GetPlaylistTrackCount(ytmusic:YTMusic, playlistId:str) -> int:
-    currentPlaylist = ytmusic.get_playlist(playlistId, limit=1)
+    currentPlaylist = ytmusic.get_playlist(playlistId, limit=10)
     if "trackCount" in currentPlaylist:
         return currentPlaylist['trackCount']
     else:
         return False
 
 def ClearPlaylist(ytmusic:YTMusic, playlistId:str) -> str:
-    currentPlaylist = ytmusic.get_playlist(
-        playlistId, limit=1
-    )
-    if currentPlaylist['trackCount'] > 0:
+    trackCount = GetPlaylistTrackCount(ytmusic, playlistId=playlistId)
+    if trackCount and trackCount > 0:
+        currentPlaylist = ytmusic.get_playlist(playlistId, limit=trackCount)
         return ytmusic.remove_playlist_items(
             playlistId, currentPlaylist['tracks']
         )
@@ -285,10 +281,10 @@ def ClearPlaylist(ytmusic:YTMusic, playlistId:str) -> str:
         return
 
 def AddToPlaylist(
-    ytmusic:YTMusic, playlistId:str, videoId:str
+    ytmusic:YTMusic, playlistId:str, videoId:str, duplicates:bool=False
 ) -> bool:
     status = ytmusic.add_playlist_items(
-        playlistId, videoIds=[videoId]
+        playlistId, videoIds=[videoId], duplicates=duplicates
     )
     if status['status'] == "STATUS_SUCCEEDED":
         return True
@@ -299,10 +295,7 @@ def YesterdayPlaylistsUpdate(
     ytmusic:YTMusic, db:Database, playlistId:str, SongArtistSearch:list
 ) -> None:
     originalSongCount = len(SongArtistSearch)
-    uniqueSongs = []
-    uniqueSongs = [
-        song for song in SongArtistSearch if song not in uniqueSongs
-    ]
+    uniqueSongs = list(dict.fromkeys(SongArtistSearch))
 
     videoIds = []
     for song in uniqueSongs:
@@ -313,7 +306,6 @@ def YesterdayPlaylistsUpdate(
             ytmusic, videoId, browseId, db
         ) is not LikeStatus.DISLIKE:
             videoIds.append(videoId)
-
     ClearPlaylist(ytmusic, playlistId)
     results = [
         AddToPlaylist(ytmusic, playlistId, videoId) 
@@ -405,89 +397,3 @@ def UpdatePlaylist(
     else:
         print("There was an error adding songs to the playlist.")
         return False
-
-def CreateWXRTFlashback(ytmusic, playlistDate=None):
-    if playlistDate is None:
-        today = datetime.now() - timedelta(hours=12)
-    else:
-        today = playlistDate
-    lastSaturday = today - timedelta(days=(7 - (5 - today.weekday())) % 7)
-    lastSaturdayFormatted = "{dt.month}%2F{dt.day}%2F{dt.year}".format(dt = lastSaturday)
-
-    url = "http://www.mediabase.com/whatsong/whatsong.asp?var_s=087088082084045070077&MONDTE="\
-    + lastSaturdayFormatted
-
-    page = get(url)
-    doc = html.fromstring(page.content)
-    trs = doc.xpath('//tr')
-
-    songList = []
-    for tr in reversed(trs[5:]):
-        if len(tr) == 6:
-            songList.append(
-                [tr[0].text_content(), tr[2].text_content().lower() +
-                " " + tr[4].text_content().lower()]
-            )
-
-    songsToAdd = []
-    for song in songList:
-        if re.match("(9|10|11):\d\d\sAM",song[0]):
-            songsToAdd.append(song[1])
-    
-    searchResults = GetSongVideoIds(
-        ytmusic, songsToAdd,
-        ExcludeDislike=False,
-        CollectPrimaryYear=True
-    )
-
-    playlistYear = searchResults['primaryYear']
-    playlistTitle = f"WXRT Saturday Morning Flashback {playlistYear}"
-    playlistDescription = "Air date " + lastSaturday.strftime("%Y-%m-%d")
-    newPlaylist = ytmusic.create_playlist(
-        playlistTitle,
-        description="",
-        privacy_status="PUBLIC"
-    )
-    return UpdatePlaylist(
-        ytmusic,
-        newPlaylist,
-        searchResults,
-        description=playlistDescription
-    )
-
-def UpdateCKPKYesterday(ytmusic, playlistId):
-    """
-    Collect playlist data on CKPK from yesterday and import it to
-    a YouTube Music playlist. Returns true if successful. Returns
-    False if playlist could not be updated.
-    """
-    url = "https://www.thepeak.fm/api/v1/music/broadcastHistory?day=-1&playerID=757"
-    headers = {
-        "Host": "www.thepeak.fm",
-        "Connection": "keep-alive",
-        "sec-ch-ua": "\"Google Chrome\";v=\"89\", \"Chromium\";v=\"89\", \";Not A Brand\";v=\"99\"",
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "X-Requested-With": "XMLHttpRequest",
-        "sec-ch-ua-mobile": "?0",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36",
-        "Sec-Fetch-Site": "same-origin",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Dest": "empty",
-        "Referer": "https://www.thepeak.fm/recentlyplayed/",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "en-US,en;q=0.9,fil;q=0.8",
-        "Cookie": "SERVERID=v1; _gcl_au=1.1.152033816.1616085086; _gid=GA1.2.1046217361.1616085087; _ga_L8XJ1TXSJ7=GS1.1.1616085086.1.0.1616085086.0; _ga=GA1.1.341213110.1616085087; __atuvc=1%7C11; __atuvs=6053805e328b1b57000; __atssc=google%3B1; PHPSESSID=8b88a5b0a76043cb13a2943e82bdcb62; sc_device_id=web%3Ac8c07bc4-4fee-4a92-a41b-d4e21ea85fbf; _fbp=fb.1.1616085087326.385418690"
-    }
-
-    r = get(url, headers=headers)
-    rJson = r.json()
-    songList = rJson['data']['scrobbles']
-
-    songsToAdd = []
-    for song in songList:
-        searchTerm = (song['artist_name'] + " " + song['song_name'])
-        songsToAdd.append(searchTerm)
-    
-    videoResults = GetSongVideoIds(ytmusic, songsToAdd)
-
-    return UpdatePlaylist(ytmusic, playlistId, videoResults)

@@ -2,19 +2,22 @@ from ytmusicapi import YTMusic
 from ytmusicFunctions import YesterdayPlaylistsUpdate
 from secretsFile import mongoString
 from pymongo import MongoClient
-from pymongo.database import Database
 from datetime import date, timedelta
 import requests
 from lxml import html
 
 def UpdateWXRTYesterday(
-    ytmusic:YTMusic, playlistId:str, db:Database=None
+    ytmusic: YTMusic, playlistId:str, dbConnectionString:str=None
 ) -> bool:
     """
     Collect playlist data on WXRT from yesterday and import it to
     a YouTube Music playlist. Returns true if successful. Returns
     False if playlist could not be updated.
     """
+
+    if dbConnectionString is not None:
+        mongoClient = MongoClient(dbConnectionString)
+        db = mongoClient['scrobble']
 
     yesterday = date.today() - timedelta(days=1)
     yesterdayFormatted = "{dt.month}%2F{dt.day}%2F{dt.year}" \
@@ -41,10 +44,8 @@ if __name__ == "__main__":
 
     playlistId = "PLJpUfuX6t6dSaHuu1oeQHWhmMTM6G_hKw"
     ytmusic = YTMusic("headers_auth.json")
-    mongoClient = MongoClient(mongoString)
-    db = mongoClient['scrobble']
 
-    UpdateWXRTYesterday(ytmusic, playlistId, db)
+    UpdateWXRTYesterday(ytmusic, playlistId, mongoString)
     #     print("Playlist update successful")
     # else:
     #     print("Error updating playlist")

@@ -1,4 +1,3 @@
-from pymongo.database import Database
 from ytmusicapi import YTMusic
 from pymongo import MongoClient
 from secretsFile import mongoString
@@ -7,13 +6,17 @@ from ytmusicFunctions import YesterdayPlaylistsUpdate
 from requests import get
 
 def UpdateWKLQYesterday(
-    ytmusic: YTMusic, playlistId:str, db:Database=None
+    ytmusic: YTMusic, playlistId:str, dbConnectionString:str=None
 ) -> bool:
     """
     Collect playlist data on WKLQ from yesterday and import it to
     a YouTube Music playlist. Returns true if successful. Returns
     False if playlist could not be updated.
     """
+    if dbConnectionString is not None:
+        mongoClient = MongoClient(dbConnectionString)
+        db = mongoClient['scrobble']
+
     searchDate = date.today() - timedelta(days=1)
     searchDate = searchDate.strftime("%Y-%m-%d")
     url = "http://wklq.tunegenie.com/api/v1/brand/nowplaying/?" +\
@@ -44,11 +47,8 @@ if __name__ == "__main__":
     print("Updating WKLQ Yesterday playlist")
     playlistId = "PLJpUfuX6t6dRg0mxM5fEufwZOd5eu_DmU"
     ytmusic = YTMusic("headers_auth.json")
-    mongoClient = MongoClient(mongoString)
-    db = mongoClient['scrobble']
 
-    # try: 
-    UpdateWKLQYesterday(ytmusic, playlistId, db=db)
-    print("Playlist update successful")
-    # except Exception:
-    #     print("Error updating playlist")
+    if UpdateWKLQYesterday(ytmusic, playlistId, dbConnectionString=mongoString):
+        print("Playlist update successful")
+    else:
+        print("Error updating playlist")

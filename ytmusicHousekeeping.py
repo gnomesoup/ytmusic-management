@@ -10,8 +10,8 @@ from datetime import datetime
 from pymongo import MongoClient
 from secretsFile import mongoString, homeassistantToken, homeassistantUrl
 from ytmusicFunctions import GetSongId
-from ytmusicFunctions import CreateWXRTFlashback
-from ytmusicFunctions import UpdateCKPKYesterday
+from ytmusicPlaylistWXRTSaturdayMorningFlashback import CreateWXRTFlashback
+from ytmusicPlaylistCKPKyesterday import UpdateCKPKYesterday
 from ytmusicPlaylistWKLQyesterday import UpdateWKLQYesterday
 from ytmusicPlaylistWXRTyesterday import UpdateWXRTYesterday
 import schedule
@@ -168,22 +168,28 @@ if __name__ == "__main__":
     user = "michael"
     schedule.every().day.at("00:00").do(
         runThreaded,
-        lambda: UpdateWXRTYesterday(ytmusic, "PLJpUfuX6t6dSaHuu1oeQHWhmMTM6G_hKw"),
+        lambda: UpdateWXRTYesterday(
+            ytmusic, "PLJpUfuX6t6dSaHuu1oeQHWhmMTM6G_hKw", mongoString
+        ),
         "WXRT_Yesterday"
     )
     schedule.every().day.at("00:30").do(
         runThreaded,
-        lambda: UpdateWKLQYesterday(ytmusic, "PLJpUfuX6t6dRg0mxM5fEufwZOd5eu_DmU"),
+        lambda: UpdateWKLQYesterday(
+            ytmusic, "PLJpUfuX6t6dRg0mxM5fEufwZOd5eu_DmU", mongoString
+        ),
         "WKLQ_Yesterday"
     )
     schedule.every().day.at("02:05").do(
         runThreaded,
-        lambda: UpdateCKPKYesterday(ytmusic, "PLJpUfuX6t6dR9DeM0gOH3rLt99Sl3SDVG"),
+        lambda: UpdateCKPKYesterday(
+            ytmusic, "PLJpUfuX6t6dR9DeM0gOH3rLt99Sl3SDVG", mongoString
+        ),
         "CKPK_Yesterday"
     )
     schedule.every().saturday.at("12:15").do(
         runThreaded,
-        lambda: CreateWXRTFlashback(ytmusic),
+        lambda: CreateWXRTFlashback(ytmusic, mongoString),
         "WXRT_Saturday_Morning_Flashback"
     )
     schedule.every().minute.at(":00").do(
