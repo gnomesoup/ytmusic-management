@@ -1,5 +1,4 @@
 from types import FunctionType
-import dataclasses
 import time
 from bson.objectid import ObjectId
 from pymongo.collection import Collection, ReturnDocument
@@ -42,19 +41,31 @@ def KeyCheck(key, documentData, ytmusicData):
     else:
         return False
 
-def BuildRequest(ytmusicHistoryItem:dict, user:str) -> dict:
+def BuildRequest(
+    ytmusicHistoryItem:dict,
+    user:str,
+    scrobbleTime:datetime=None
+) -> dict:
+    if scrobbleTime is None:
+        scrobbleTime = datetime.utcnow()
     artists = [artist['name'] for artist in ytmusicHistoryItem['artists']]
+    if "duration" in ytmusicHistoryItem:
+        duration = ytmusicHistoryItem['duration']
+    elif "length" in ytmusicHistoryItem:
+        duration = ytmusicHistoryItem['length']
+    else:
+        duration = None
     try:
         album = ytmusicHistoryItem['album']['name']
     except Exception:
         album = None
     return {
-        "time": datetime.utcnow(),
+        "time": scrobbleTime,
         "videoId": ytmusicHistoryItem['videoId'],
         "title": ytmusicHistoryItem['title'],
         "artists": artists,
         "album": album,
-        "duration": ytmusicHistoryItem['duration'],
+        "duration": duration,
         "user": user
     }
 
@@ -79,24 +90,38 @@ def LinkScrobblerSong(
 def GetLocationFromHomeAssistant(
     homeassistantUrl:str,
     homeassistantToken:str,
-    locationEntity:str
+    locationEntity:str,
+    timePoint:datetime=None
 ) -> dict:
     location = {}
-    homeassistantResult = requests.get(
-        homeassistantUrl + "/api/states/" + locationEntity,
-        headers={
-            "Authorization": "Bearer " + homeassistantToken,
-            "Content-Type": "application/json"
+    if timePoint is None:
+        url = f"{homeassistantUrl}/api/states/{locationEntity}"
+    else:
+        homeassistantTime = timePoint.strftime("%Y-%m-%dT%H:%M:%S")
+        url = ( 
+            f"{homeassistantUrl}/api/history/period/{homeassistantTime}"
+            f"?filter_entity_id={locationEntity}&minimal_response"
+        )
+    try:
+        homeassistantResult = requests.get(
+            url,
+            headers={
+                "Authorization": "Bearer " + homeassistantToken,
+                "Content-Type": "application/json"
+            }
+        )
+        homeassistantData = homeassistantResult.json()
+        if timePoint is not None:
+            homeassistantData = homeassistantData[0][0]
+        location = {
+            "type": "Point",
+            "coordinates": [
+                homeassistantData["attributes"]["longitude"],
+                homeassistantData["attributes"]["latitude"]
+            ]
         }
-    )
-    homeassistantData = homeassistantResult.json()
-    location = {
-        "type": "Point",
-        "coordinates": [
-            homeassistantData["attributes"]["longitude"],
-            homeassistantData["attributes"]["latitude"]
-        ]
-    }
+    except Exception:
+        location = None
     return location
 
 def ScrobbleAddLocation(
@@ -122,18 +147,19 @@ def YTMusicScrobble(ytmusic:YTMusic, connectionString:str, user:str) -> None:
             "user": scrobblerData['scrobblerUser']
         },
         projection={"videoId": 1}
-    ).sort("time", DESCENDING).limit(5)
+    ).sort("time", DESCENDING).limit(1)
     lastScrobbleIds = [scrobble['videoId'] for scrobble in lastScrobbles]
-    matchStartIndex = 0
     for i in range(4):
         ytmusicHistory = ytmusic.get_history()
         if len(ytmusicHistory) == 0:
             return
         historyVideoIds = [track['videoId'] for track in ytmusicHistory]
+        matchStartIndex = len(historyVideoIds)
         endIndex = len(lastScrobbleIds)
         for i in range(len(historyVideoIds)):
             historySublist = historyVideoIds[i:i+endIndex]
-            if historySublist == lastScrobbleIds:
+            lastScrobbleSublist = lastScrobbleIds[0:len(historySublist)]
+            if historySublist == lastScrobbleSublist:
                 matchStartIndex = i
                 break
         if matchStartIndex < 1:
