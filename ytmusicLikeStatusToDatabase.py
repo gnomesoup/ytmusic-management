@@ -23,23 +23,31 @@ if __name__ == "__main__":
     db = mongoClient['scrobble']
     databaseUser = "michael"
     
+
+    print(
+        f"Missing Like Status: "
+        f"{db['songs'].count_documents( {'likeStatus': {'$exists': False}})}"
+    )
+
     ytLikes = ytmusic.get_liked_songs(limit=2000)
     videoIds = [track['videoId'] for track in ytLikes['tracks']]
     updatedSongs = [
         LikeSongByYTMusicId(
             db=db,
-            videoId=track['videoId'],
+            videoId=videoId,
             databaseUser=databaseUser
-        ) for track in ytLikes['tracks']
+        ) for videoId in videoIds
     ]
+
     newSongs = [
         GetSongId(ytmusic=ytmusic, db=db, videoId=track['videoId'])
         for track in updatedSongs if track['songId'] is None
     ]
+    if newSongs:
+        print("Adding new songs to database")
     
     for songId in newSongs:
         ['songs'].find_one_and_update(
             {"_id": songId},
             {"$set": {"likeStatus": 1}}
         )
-    print(len(newSongs))

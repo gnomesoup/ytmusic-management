@@ -289,6 +289,7 @@ def AddToPlaylist(
     if status['status'] == "STATUS_SUCCEEDED":
         return True
     else:
+        print(f"AddtoPlaylist Error: Could not add {videoId}")
         return False
 
 def YesterdayPlaylistsUpdate(
