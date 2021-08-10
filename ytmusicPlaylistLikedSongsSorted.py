@@ -5,7 +5,6 @@ from ytmusicapi import YTMusic
 from pymongo import MongoClient
 from secretsFile import mongoString
 from datetime import datetime
-import cProfile
 
 def UpdateLikeSongsSorted(databaseConnectionString:str):
     ytmusic = YTMusic("headers_auth.json")
@@ -13,7 +12,7 @@ def UpdateLikeSongsSorted(databaseConnectionString:str):
     db = mongoClient['scrobble']
     playlistId = "PLJpUfuX6t6dScH3Ua2f2EsmRC4PolZp8I"
     likedSongs = db['scrobbleCount'].find(
-        {"likeStatus": 1},
+        {"likeStatus": 1, "ytmusicPlayable": {"$ne": False}},
         sort=[("time", 1)],
         limit=100
     )

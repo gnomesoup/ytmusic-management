@@ -47,6 +47,7 @@ def GetPlayability(
                 f"{', '.join(firstSongArtists)} | "
                 f"{firstSong['album']['name'] if 'album' in firstSong else ''}"
             )
+            playable = False
     else:
         db['songs'].find_one_and_update(
             {"_id": dbDocument['_id']},
@@ -67,7 +68,7 @@ def VideoIdCheck(
     for i, doc in enumerate(db['songs'].find({}, skip=skip, limit=limit)):
         print(f"song#: {i + skip + 1}", end=lineEnd)
         if not GetPlayability(ytmusic=ytmusic, dbDocument=doc):
-            print(f"song#: {i + skip}")
+            print(f"song#: {i + skip + 1}")
     print(f"song#: {i + skip + 1}")
     return
 
