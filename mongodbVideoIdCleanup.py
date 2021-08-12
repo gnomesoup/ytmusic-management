@@ -29,7 +29,10 @@ def GetPlayability(
         ):
             db['songs'].find_one_and_update(
                 {"_id": dbDocument['_id']},
-                {"$set": {"ytmusicId": firstSong['videoId']}}
+                {"$set": {
+                    "ytmusicId": firstSong['videoId'],
+                    "ytmusicPlayable": True
+                }}
             )
             print(f"{statusMessage} <- {firstSong['videoId']}")
         else:
@@ -76,4 +79,4 @@ if __name__ == "__main__":
     mongoClient = MongoClient(mongoString)
     db = mongoClient['scrobble']
     ytmusic = YTMusic("headers_auth.json")
-    VideoIdCheck(ytmusic=ytmusic, db=db, skip=100, limit=900)
+    VideoIdCheck(ytmusic=ytmusic, db=db, skip=10627, limit=2000)
