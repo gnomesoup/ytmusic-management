@@ -168,6 +168,11 @@ def YTMusicScrobble(ytmusic:YTMusic, connectionString:str, user:str) -> None:
             break
         else:
             print(f"Large number of scrobbles: {matchStartIndex}")
+    # because ytmusic is so inconsistent with how they report history, 
+    # sometimes songs just disappear and we get the whole 200 songs in the
+    # history at onces. So, if the length equals 200, just get the last song
+    matchStartIndex = matchStartIndex[0] if len(matchStartIndex) == 200 \
+        else matchStartIndex
     location = None
     for i in reversed(range(matchStartIndex)):
         request = BuildRequest(ytmusicHistory[i], user)
