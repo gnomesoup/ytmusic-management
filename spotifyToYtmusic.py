@@ -4,7 +4,10 @@ from secretsFile import spotifyClientID, spotifyClientSecret
 from ytmusicapi import YTMusic
 from ytmusicFunctions import GetSongVideoIds, UpdatePlaylist
 
-spotifyPlayistId = "3Cv4shCKUFpSnTRINIistD"
+# Sex Education Soundtrack
+# https://open.spotify.com/playlist/0SmKzbbBAmspl0GCiETzYp
+
+spotifyPlayistId = "0SmKzbbBAmspl0GCiETzYp"
 
 print("Creating a YouTube Music Playlist from a Spotify Playlist")
 ytmusic = YTMusic("headers_auth.json")
