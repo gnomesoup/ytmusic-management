@@ -17,8 +17,12 @@ sp = spotipy.Spotify(client_credentials_manager=scc)
 
 spotifyPlaylist = sp.playlist(spotifyPlayistId)
 tracks = spotifyPlaylist['tracks']
+trackResults = tracks['items']
+while tracks['next']:
+    tracks = sp.next(tracks)
+    trackResults.extend(tracks['items'])
 songArtistSearchList = []
-for track in spotifyPlaylist['tracks']['items']:
+for track in trackResults:
     trackInfo = track['track']
     title = trackInfo['name']
     artist = trackInfo['artists'][0]['name']
@@ -26,7 +30,7 @@ for track in spotifyPlaylist['tracks']['items']:
 
 songsToAdd = GetSongVideoIds(ytmusic, songArtistSearchList)
 playlistTitle = spotifyPlaylist['name']
-playlistDescription = "Imported from a spotify playlist\n{}"
+playlistDescription = "Imported from a spotify playlist"
 newPlaylist = ytmusic.create_playlist(
     playlistTitle,
     description="",
