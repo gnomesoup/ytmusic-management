@@ -147,7 +147,10 @@ def GetSongVideoId(
         else:
             firstSong = ytmSearch[0]
             videoId = firstSong['videoId']
-            browseId = firstSong['album']['id']
+            if firstSong['album']:
+                browseId = firstSong['album']['id']
+            else:
+                browseId = None
             if verbose:
                 print(f"    YTMusic result: {videoId}")
         if db:
