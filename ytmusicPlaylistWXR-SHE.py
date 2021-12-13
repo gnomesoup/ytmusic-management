@@ -1,7 +1,5 @@
 from ytmusicapi import YTMusic
-
-from ytmusicFunctions import AddToPlaylist, ClearPlaylist
-import random
+from ytmusicFunctions import MixPlaylists
 
 if __name__ == "__main__":
     
@@ -11,20 +9,14 @@ if __name__ == "__main__":
 
     ytmusic = YTMusic("headers_auth.json")
 
-    shePlaylist = ytmusic.get_playlist(shePlaylistId)
-    sheSongs = shePlaylist['tracks']
-    xrtPlaylist = ytmusic.get_playlist(xrtPlaylistId)
-    xrtSongs = xrtPlaylist['tracks']
-    songIds = [
-        track['videoId'] for track in
-        sheSongs + xrtSongs
-    ]
+    print("Updating WXR-SHE Mix playlist")
 
-    ClearPlaylist(ytmusic=ytmusic, playlistId=wxrShePlaylistId)
-    random.shuffle(songIds)
-    for videoId in songIds:
-        AddToPlaylist(
-            ytmusic=ytmusic,
-            playlistId=wxrShePlaylistId,
-            videoId=videoId
-        )
+    if MixPlaylists(
+        ytmusic=ytmusic,
+        playlistId1=xrtPlaylistId,
+        playlistId2=shePlaylistId,
+        finalPlaylistId=wxrShePlaylistId
+    ):
+        print("Playlist update successful")
+    else:
+        print("Error updating playlist")

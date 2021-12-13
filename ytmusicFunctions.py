@@ -1,7 +1,8 @@
-from enum import Enum
 from bson.objectid import ObjectId
-from pymongo.database import Database
 from datetime import datetime
+from enum import Enum
+from pymongo.database import Database
+import random
 import re
 from ytmusicapi import YTMusic
 
@@ -401,3 +402,26 @@ def UpdatePlaylist(
     else:
         print("There was an error adding songs to the playlist.")
         return False
+
+def MixPlaylists(
+    ytmusic:YTMusic, playlistId1:str, playlistId2:str, finalPlaylistId:str
+) -> bool:
+    playlist1 = ytmusic.get_playlist(playlistId1)
+    playlist1Songs = playlist1['tracks']
+    playlist2 = ytmusic.get_playlist(playlistId2)
+    playlist2Songs = playlist2['tracks']
+    songIds = [
+        track['videoId'] for track in
+        playlist1Songs + playlist2Songs
+    ]
+
+    ClearPlaylist(ytmusic=ytmusic, playlistId=finalPlaylistId)
+    random.shuffle(songIds)
+    results = [
+        AddToPlaylist(
+            ytmusic=ytmusic,
+            playlistId=finalPlaylistId,
+            videoId=videoId
+        ) for videoId in songIds
+    ]
+    return sum(results) > 0

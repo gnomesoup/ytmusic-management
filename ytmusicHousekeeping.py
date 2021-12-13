@@ -8,11 +8,12 @@ from ytmusicapi import YTMusic
 from datetime import datetime
 from pymongo import MongoClient
 from secretsFile import mongoString, homeassistantToken, homeassistantUrl
-from ytmusicFunctions import GetSongId
+from ytmusicFunctions import GetSongId, MixPlaylists
 from ytmusicPlaylistWXRTSaturdayMorningFlashback import CreateWXRTFlashback
 from ytmusicPlaylistCKPKyesterday import UpdateCKPKYesterday
 from ytmusicPlaylistWKLQyesterday import UpdateWKLQYesterday
 from ytmusicPlaylistWXRTyesterday import UpdateWXRTYesterday
+from ytmusicPlaylistWSHEyesterday import UpdateWSHEYesterday
 import schedule
 from threading import Thread
 import requests
@@ -198,6 +199,13 @@ if __name__ == "__main__":
     user = "michael"
     schedule.every().day.at("00:00").do(
         runThreaded,
+        lambda: UpdateWSHEYesterday(
+            ytmusic, "PLJpUfuX6t6dTyEfFJmvVlIGzcXR1dKFt5", mongoString
+        ),
+        "WSHE_Yesterday"
+    )
+    schedule.every().day.at("00:15").do(
+        runThreaded,
         lambda: UpdateWXRTYesterday(
             ytmusic, "PLJpUfuX6t6dSaHuu1oeQHWhmMTM6G_hKw", mongoString
         ),
@@ -209,6 +217,16 @@ if __name__ == "__main__":
             ytmusic, "PLJpUfuX6t6dRg0mxM5fEufwZOd5eu_DmU", mongoString
         ),
         "WKLQ_Yesterday"
+    )
+    schedule.every().day.at("01:00").do(
+        runThreaded,
+        lambda: MixPlaylists(
+            ytmusic=ytmusic,
+            playlistId1="PLJpUfuX6t6dTyEfFJmvVlIGzcXR1dKFt5",
+            playlistId2="PLJpUfuX6t6dSaHuu1oeQHWhmMTM6G_hKw",
+            finalPlaylistId="PLJpUfuX6t6dSbJr2-k5ItAMFr7-DNszDJ"
+        ),
+        "WXR-SHE_Mix_Playlist"
     )
     schedule.every().day.at("02:05").do(
         runThreaded,
