@@ -123,7 +123,7 @@ def GetSongVideoId(
     videoId = None
     browseId = None
     songId = None
-    if db:
+    if db is not None:
         songDocument = db['songs'].find_one(
             {
                 "searchString": {
@@ -154,7 +154,7 @@ def GetSongVideoId(
                 browseId = None
             if verbose:
                 print(f"    YTMusic result: {videoId}")
-        if db:
+        if db is not None:
             songId = GetSongId(ytmusic, db, videoId)
             result = db['songs'].find_one_and_update(
                 {"_id": songId},
