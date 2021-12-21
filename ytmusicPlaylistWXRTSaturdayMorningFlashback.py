@@ -52,7 +52,7 @@ def CreateWXRTFlashback(
         videoId, browseId, songId = GetSongVideoId(
             ytmusic=ytmusic, songSearchString=song, db=db
         )
-        if db:
+        if db is not None:
             songDocument = db['songs'].find_one({"_id": songId})
         else:
             songDocument = {}

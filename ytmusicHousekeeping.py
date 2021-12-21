@@ -8,12 +8,14 @@ from ytmusicapi import YTMusic
 from datetime import datetime
 from pymongo import MongoClient
 from secretsFile import mongoString, homeassistantToken, homeassistantUrl
-from ytmusicFunctions import GetSongId, MixPlaylists
+from ytmusicFunctions import GetSongId
+from ytmusicPlaylistDoubleYouMixAreShe import MixChicagoRadioStations
 from ytmusicPlaylistWXRTSaturdayMorningFlashback import CreateWXRTFlashback
 from ytmusicPlaylistCKPKyesterday import UpdateCKPKYesterday
 from ytmusicPlaylistWKLQyesterday import UpdateWKLQYesterday
 from ytmusicPlaylistWXRTyesterday import UpdateWXRTYesterday
 from ytmusicPlaylistWSHEyesterday import UpdateWSHEYesterday
+from ytmusicPlaylistWTMXyesterday import UpdateWTMXYesterday
 import schedule
 from threading import Thread
 import requests
@@ -206,12 +208,19 @@ if __name__ == "__main__":
     )
     schedule.every().day.at("00:15").do(
         runThreaded,
+        lambda: UpdateWTMXYesterday(
+            ytmusic, "PLJpUfuX6t6dS__5F2qgcopS26s5MbO8Yd", mongoString
+        ),
+        "WSHE_Yesterday"
+    )
+    schedule.every().day.at("00:30").do(
+        runThreaded,
         lambda: UpdateWXRTYesterday(
             ytmusic, "PLJpUfuX6t6dSaHuu1oeQHWhmMTM6G_hKw", mongoString
         ),
         "WXRT_Yesterday"
     )
-    schedule.every().day.at("00:30").do(
+    schedule.every().day.at("00:45").do(
         runThreaded,
         lambda: UpdateWKLQYesterday(
             ytmusic, "PLJpUfuX6t6dRg0mxM5fEufwZOd5eu_DmU", mongoString
@@ -220,13 +229,8 @@ if __name__ == "__main__":
     )
     schedule.every().day.at("01:00").do(
         runThreaded,
-        lambda: MixPlaylists(
-            ytmusic=ytmusic,
-            playlistId1="PLJpUfuX6t6dTyEfFJmvVlIGzcXR1dKFt5",
-            playlistId2="PLJpUfuX6t6dSaHuu1oeQHWhmMTM6G_hKw",
-            finalPlaylistId="PLJpUfuX6t6dSbJr2-k5ItAMFr7-DNszDJ"
-        ),
-        "WXR-SHE_Mix_Playlist"
+        lambda: MixChicagoRadioStations(ytmusic=ytmusic),
+        "Double_You_Mix_Are_She_Playlist"
     )
     schedule.every().day.at("02:05").do(
         runThreaded,
