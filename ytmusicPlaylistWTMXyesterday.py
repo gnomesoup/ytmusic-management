@@ -20,7 +20,7 @@ def UpdateWTMXYesterday(
             Defaults to None.
 
     Returns:
-        bool: Returns true if successfull. Returns false if the playlist
+        bool: Returns true if successful. Returns false if the playlist
             could not be updated.
     """
     if dbConnectionString is not None:
