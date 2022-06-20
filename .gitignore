@@ -1,7 +1,7 @@
 
 .venv
 .vscode
-headers_auth.json
+*.json
 *.code-workspace
 secretsFile.py
 ytmusicHistory.p
