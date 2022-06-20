@@ -226,7 +226,8 @@ if __name__ == "__main__":
     )
     schedule.every().day.at("01:30").do(
         runThreaded,
-        lambda: UpdateWDVXYesterday()
+        lambda: UpdateWDVXYesterday(),
+        "WDVX Yesterday"
     )
     schedule.every().day.at("01:00").do(
         runThreaded,
