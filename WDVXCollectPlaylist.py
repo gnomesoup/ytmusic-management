@@ -33,8 +33,10 @@ def WDVXCollectPlaylistData(url: str, filePath: str) -> None:
     for track in newTracks:
         if track not in allTracks:
             allTracks[track] = newTracks[track]
-        elif datetime.strptime(track, "%b %d, %Y %H:%M %p") < twoWeeksAgo:
-            allTracks.pop(track)
+        else:
+            trackDate = datetime.strptime(track, "%b %d, %Y %H:%M %p")
+            if date(trackDate.year, trackDate.month, trackDate.day) < twoWeeksAgo:
+                allTracks.pop(track)
     with open(filePath, mode="w") as fp:
         json.dump(allTracks, fp)
     plural = "" if len(allTracks) == 1 else "s"

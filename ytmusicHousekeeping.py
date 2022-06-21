@@ -1,14 +1,17 @@
-from types import FunctionType
-import time
 from bson.objectid import ObjectId
+from datetime import datetime
+from os import chdir
 from pymongo.collection import Collection, ReturnDocument
 from pymongo.database import Database
 from pymongo import DESCENDING
-from ytmusicapi import YTMusic
-from datetime import datetime
 from pymongo import MongoClient
+import requests
+import schedule
 from secretsFile import mongoString, homeassistantToken, homeassistantUrl
-from WDVXCollectPlaylist import WDVXCollectPlaylistData
+from threading import Thread
+import time
+from types import FunctionType
+from ytmusicapi import YTMusic
 from ytmusicFunctions import GetSongId
 from ytmusicPlaylistDoubleYouMixAreShe import MixChicagoRadioStations
 from ytmusicPlaylistWDVX import UpdateWDVXYesterday
@@ -18,9 +21,7 @@ from ytmusicPlaylistWKLQyesterday import UpdateWKLQYesterday
 from ytmusicPlaylistWXRTyesterday import UpdateWXRTYesterday
 from ytmusicPlaylistWSHEyesterday import UpdateWSHEYesterday
 from ytmusicPlaylistWTMXyesterday import UpdateWTMXYesterday
-import schedule
-from threading import Thread
-import requests
+from WDVXCollectPlaylist import WDVXCollectPlaylistData
 
 
 def runThreaded(function: FunctionType, name: str):
@@ -194,6 +195,7 @@ def YTMusicScrobble(ytmusic: YTMusic, connectionString: str, user: str) -> None:
 
 if __name__ == "__main__":
     print("YouTube Music Housekeeping")
+    chdir("/ytmusic")
     ytmusic = YTMusic("headers_auth.json")
     user = "michael"
     schedule.every().day.at("00:00").do(

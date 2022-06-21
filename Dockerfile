@@ -11,3 +11,5 @@ RUN apk add bash
 COPY . .
 
 CMD ["python", "-u", "ytmusicHousekeeping.py"]
+
+WORKDIR /ytmusic
