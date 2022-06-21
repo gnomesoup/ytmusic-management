@@ -25,7 +25,7 @@ from WDVXCollectPlaylist import WDVXCollectPlaylistData
 
 
 def runThreaded(function: FunctionType, name: str):
-    print(f"{datetime.now().isoformat()}  " f"Running: {name}")
+    # print(f"{datetime.now().isoformat()}  " f"Running: {name}")
     job = Thread(target=function, name=name)
     job.start()
 
