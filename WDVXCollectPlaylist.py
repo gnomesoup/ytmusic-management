@@ -27,16 +27,19 @@ def WDVXCollectPlaylistData(url: str, filePath: str) -> None:
     newTracks = {
         tr[0].text_content(): tr[1].text_content() for tr in trs if len(tr) == 2
     }
-    plural = "" if len(newTracks) == 1 else "s"
-    print(f"WDVX Collect: Adding {len(newTracks)} track{plural}")
     twoWeeksAgo = date.today() - timedelta(days=14)
+    addCount = 0
     for track in newTracks:
         if track not in allTracks:
             allTracks[track] = newTracks[track]
+            addCount += 1
         else:
             trackDate = datetime.strptime(track, "%b %d, %Y %H:%M %p")
             if date(trackDate.year, trackDate.month, trackDate.day) < twoWeeksAgo:
                 allTracks.pop(track)
+    if addCount:
+        plural = "" if addCount == 1 else "s"
+        print(f"WDVX Collect: Adding {addCount} track{plural}")
     with open(filePath, mode="w") as fp:
         json.dump(allTracks, fp)
     plural = "" if len(allTracks) == 1 else "s"
