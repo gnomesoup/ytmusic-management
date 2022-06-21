@@ -1,3 +1,4 @@
+from datetime import date, datetime, timedelta
 import json
 from lxml import html
 from os import path
@@ -26,15 +27,18 @@ def WDVXCollectPlaylistData(url: str, filePath: str) -> None:
     newTracks = {
         tr[0].text_content(): tr[1].text_content() for tr in trs if len(tr) == 2
     }
-    print(f"len(allTracks) = {len(allTracks)}")
-    print(f"len(newTracks) = {len(newTracks)}")
+    plural = "" if len(newTracks) == 1 else "s"
+    print(f"WDVX Collect: Adding {len(newTracks)} track{plural}")
+    twoWeeksAgo = date.today() - timedelta(days=14)
     for track in newTracks:
         if track not in allTracks:
             allTracks[track] = newTracks[track]
-            print(f"Track Added: {newTracks[track]}")
+        elif datetime.strptime(track, "%b %d, %Y %H:%M %p") < twoWeeksAgo:
+            allTracks.pop(track)
     with open(filePath, mode="w") as fp:
         json.dump(allTracks, fp)
-    print(f"len(allTracks) = {len(allTracks)}")
+    plural = "" if len(allTracks) == 1 else "s"
+    print(f"WDVX Collect: {len(allTracks)} total track{plural}")
     return
 
 

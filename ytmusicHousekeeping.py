@@ -226,8 +226,12 @@ if __name__ == "__main__":
     )
     schedule.every().day.at("01:30").do(
         runThreaded,
-        lambda: UpdateWDVXYesterday(),
-        "WDVX Yesterday"
+        lambda: UpdateWDVXYesterday(
+            ytmusic=ytmusic,
+            playlistId="PLJpUfuX6t6dTz7hGKVztERi0YnE_azCg1",
+            dbConnectionString=mongoString,
+        ),
+        "WDVX Yesterday",
     )
     schedule.every().day.at("01:00").do(
         runThreaded,
@@ -244,14 +248,14 @@ if __name__ == "__main__":
         lambda: WDVXCollectPlaylistData(
             "https://wdvx.com/listen/playlist/", "WDVX-Playlist.json"
         ),
-        "Collect WDVX Data"
+        "Collect WDVX Data",
     )
     schedule.every().hour.at("30:30").do(
         runThreaded,
         lambda: WDVXCollectPlaylistData(
             "https://wdvx.com/listen/playlist/", "WDVX-Playlist.json"
         ),
-        "Collect WDVX Data"
+        "Collect WDVX Data",
     )
     YTMusicScrobble(ytmusic, mongoString, user)
     while True:
