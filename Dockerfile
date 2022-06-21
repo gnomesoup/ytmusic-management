@@ -8,8 +8,8 @@ RUN pip install --no-cache-dir ytmusicapi lxml requests pymongo schedule
 
 RUN apk add bash
 
+RUN mkdir /ytmusic
+
 COPY . .
 
 CMD ["python", "-u", "ytmusicHousekeeping.py"]
-
-WORKDIR /ytmusic
