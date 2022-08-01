@@ -304,9 +304,12 @@ def YesterdayPlaylistsUpdate(
 
     videoIds = []
     for song in uniqueSongs:
-        videoId, browseId, songId = GetSongVideoId(
-            ytmusic, song, db=db
-        )
+        try:
+            videoId, browseId, songId = GetSongVideoId(
+                ytmusic, song, db=db
+            )
+        except:
+            continue
         if GetLikeStatus(
             ytmusic, videoId, browseId, db
         ) is not LikeStatus.DISLIKE:
