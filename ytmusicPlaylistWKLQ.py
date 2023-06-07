@@ -19,7 +19,7 @@ r = requests.get(url, headers=headers)
 rJson = r.json()
 songList = rJson['response']
 
-ytmusic = YTMusic("headers_auth.json")
+ytmusic = YTMusic("oauth.json")
 playlistTitle = "WKLQ Playlist from " + date
 playlistDescription = ""
 playlistPrivacyStatus = "PUBLIC"

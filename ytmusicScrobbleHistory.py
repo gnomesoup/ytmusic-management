@@ -6,7 +6,7 @@ from pymongo import MongoClient
 from scrobbleFunctions import GetLatestHistory, GetLocationFromHomeAssistant, \
     PostScrobble
 
-ytmusic = YTMusic("headers_auth.json")
+ytmusic = YTMusic("oauth.json")
 mongoClient = MongoClient(mongoString)
 db = mongoClient['scrobble']
 scrobblerId = '607f962eeafb5500062a4a68'

@@ -87,7 +87,7 @@ def CreateWXRTFlashback(
         return False
 if __name__ == "__main__":
     print("Creating WXRT Saturday Morning Flashback Playlist")
-    ytmusic = YTMusic("headers_auth.json")
+    ytmusic = YTMusic("oauth.json")
 
     if CreateWXRTFlashback(ytmusic, dbConnectionString=mongoString):
         print("Playlist created successfully")

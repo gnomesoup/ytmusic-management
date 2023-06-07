@@ -47,7 +47,7 @@ def UpdateCKPKYesterday(ytmusic, playlistId, dbConnectionString:str) -> bool:
 if __name__ == "__main__":
     playlistId = "PLJpUfuX6t6dR9DeM0gOH3rLt99Sl3SDVG"
     print("Updating CKPK Yesterday playlist")
-    ytmusic = YTMusic("headers_auth.json")
+    ytmusic = YTMusic("oauth.json")
 
     if UpdateCKPKYesterday(ytmusic, playlistId, mongoString):
         print("Playlist update successful")

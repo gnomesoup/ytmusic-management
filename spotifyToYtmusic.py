@@ -10,7 +10,7 @@ from ytmusicFunctions import GetSongVideoIds, UpdatePlaylist
 spotifyPlayistId = "0SmKzbbBAmspl0GCiETzYp"
 
 print("Creating a YouTube Music Playlist from a Spotify Playlist")
-ytmusic = YTMusic("headers_auth.json")
+ytmusic = YTMusic("oauth.json")
 
 scc = SpotifyClientCredentials(spotifyClientID, spotifyClientSecret)
 sp = spotipy.Spotify(client_credentials_manager=scc)

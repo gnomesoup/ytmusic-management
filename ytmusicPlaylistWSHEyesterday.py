@@ -79,7 +79,7 @@ def UpdateWSHEYesterday(
 
 if __name__ == "__main__":
     # https://music.youtube.com/playlist?list=PLJpUfuX6t6dTyEfFJmvVlIGzcXR1dKFt5&feature=share
-    ytmusic = YTMusic("headers_auth.json")
+    ytmusic = YTMusic("oauth.json")
     playlistId = "PLJpUfuX6t6dTyEfFJmvVlIGzcXR1dKFt5"
     if UpdateWSHEYesterday(
         ytmusic=ytmusic,

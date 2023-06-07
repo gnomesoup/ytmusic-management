@@ -50,7 +50,7 @@ def MixChicagoRadioStations(ytmusic:YTMusic) -> bool:
 
 if __name__ == "__main__":
     
-    ytmusic = YTMusic("headers_auth.json")
+    ytmusic = YTMusic("oauth.json")
     print("Updating Double You Mix Are She playlist")
 
     if MixChicagoRadioStations(ytmusic=ytmusic):

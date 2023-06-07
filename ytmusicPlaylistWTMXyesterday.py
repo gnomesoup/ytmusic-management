@@ -79,7 +79,7 @@ def UpdateWTMXYesterday(
 
 if __name__ == "__main__":
     #https://music.youtube.com/playlist?list=PLJpUfuX6t6dS__5F2qgcopS26s5MbO8Yd&feature=share
-    ytmusic = YTMusic("headers_auth.json")
+    ytmusic = YTMusic("oauth.json")
     playlistId = "PLJpUfuX6t6dS__5F2qgcopS26s5MbO8Yd"
     if UpdateWTMXYesterday(
         ytmusic=ytmusic,

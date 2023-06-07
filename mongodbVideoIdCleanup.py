@@ -78,5 +78,5 @@ def VideoIdCheck(
 if __name__ == "__main__":
     mongoClient = MongoClient(mongoString)
     db = mongoClient['scrobble']
-    ytmusic = YTMusic("headers_auth.json")
+    ytmusic = YTMusic("oauth.json")
     VideoIdCheck(ytmusic=ytmusic, db=db, skip=10627, limit=2000)

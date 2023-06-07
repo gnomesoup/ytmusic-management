@@ -42,8 +42,9 @@ def UpdateWXRTYesterday(
 if __name__ == "__main__":
     print("Updating WXRT Yesterday playlist")
 
+    # playlistId = "PLJpUfuX6t6dSny3xYyXfWXL2c8PYCs8KC"
     playlistId = "PLJpUfuX6t6dSaHuu1oeQHWhmMTM6G_hKw"
-    ytmusic = YTMusic("headers_auth.json")
+    ytmusic = YTMusic("oauth.json")
 
     UpdateWXRTYesterday(ytmusic, playlistId, mongoString)
     #     print("Playlist update successful")

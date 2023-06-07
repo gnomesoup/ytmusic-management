@@ -18,7 +18,7 @@ def LikeSongByYTMusicId(db:Database, videoId:str, databaseUser:str):
     return {"videoId": videoId, "songId": songId}
 
 if __name__ == "__main__":
-    ytmusic = YTMusic("headers_auth.json")
+    ytmusic = YTMusic("oauth.json")
     mongoClient = MongoClient(mongoString)
     db = mongoClient['scrobble']
     databaseUser = "michael"

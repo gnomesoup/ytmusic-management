@@ -1,6 +1,6 @@
 from ytmusicapi import YTMusic
 
-ytmusic = YTMusic("headers_auth.json")
+ytmusic = YTMusic("oauth.json")
 playlistId = "PLJpUfuX6t6dSlyTg9M4CGzk8GVJEnkJ7w"
 playlist = ytmusic.get_playlist(playlistId, 500)
 songs = playlist['tracks']

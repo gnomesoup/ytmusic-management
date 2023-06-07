@@ -196,7 +196,7 @@ def YTMusicScrobble(ytmusic: YTMusic, connectionString: str, user: str) -> None:
 if __name__ == "__main__":
     print("YouTube Music Housekeeping")
     chdir("/ytmusic")
-    ytmusic = YTMusic("headers_auth.json")
+    ytmusic = YTMusic("oauth.json")
     user = "michael"
     schedule.every().day.at("00:00").do(
         runThreaded,

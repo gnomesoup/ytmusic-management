@@ -47,7 +47,7 @@ if __name__ == "__main__":
     takeoutFilePath = "/Users/mpfammatter/Downloads/Takeout/"\
         + "YouTube and YouTube Music/history/watch-history.json"
 
-    ytmusic = YTMusic("headers_auth.json")
+    ytmusic = YTMusic("oauth.json")
     mongoClient = MongoClient(mongoString)
     db = mongoClient['scrobble']
 

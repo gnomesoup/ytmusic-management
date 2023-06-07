@@ -7,7 +7,7 @@ from secretsFile import mongoString
 from datetime import datetime
 
 def UpdateLikeSongsSorted(databaseConnectionString:str):
-    ytmusic = YTMusic("headers_auth.json")
+    ytmusic = YTMusic("oauth.json")
     mongoClient = MongoClient(databaseConnectionString)
     db = mongoClient['scrobble']
     playlistId = "PLJpUfuX6t6dScH3Ua2f2EsmRC4PolZp8I"

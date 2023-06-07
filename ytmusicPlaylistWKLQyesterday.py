@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     print("Updating WKLQ Yesterday playlist")
     playlistId = "PLJpUfuX6t6dRg0mxM5fEufwZOd5eu_DmU"
-    ytmusic = YTMusic("headers_auth.json")
+    ytmusic = YTMusic("oauth.json")
 
     if UpdateWKLQYesterday(ytmusic, playlistId, dbConnectionString=mongoString):
         print("Playlist update successful")

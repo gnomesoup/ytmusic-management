@@ -287,14 +287,17 @@ def ClearPlaylist(ytmusic:YTMusic, playlistId:str) -> str:
 def AddToPlaylist(
     ytmusic:YTMusic, playlistId:str, videoId:str, duplicates:bool=False
 ) -> bool:
-    status = ytmusic.add_playlist_items(
-        playlistId, videoIds=[videoId], duplicates=duplicates
-    )
-    if status['status'] == "STATUS_SUCCEEDED":
-        return True
-    else:
-        print(f"AddtoPlaylist Error: Could not add {videoId}")
-        return False
+    try:
+        status = ytmusic.add_playlist_items(
+            playlistId, videoIds=[videoId], duplicates=duplicates
+        )
+        if status['status'] == "STATUS_SUCCEEDED":
+            return True
+        else:
+            print(f"AddtoPlaylist Error: Could not add {videoId}")
+            return False
+    except Exception as e:
+        print(f"Error adding song: {type(e)} {e}")
 
 def YesterdayPlaylistsUpdate(
     ytmusic:YTMusic, db:Database, playlistId:str, SongArtistSearch:list

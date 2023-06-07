@@ -1,6 +1,6 @@
 from ytmusicapi import YTMusic
 
-ytmusic = YTMusic("headers_auth.json")
+ytmusic = YTMusic("oauth.json")
 playlistTitle = "TITLE"
 playlistDescription = ""
 playlistPrivacyStatus = "PUBLIC"

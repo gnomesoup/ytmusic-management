@@ -60,7 +60,7 @@ def UpdateWDVXYesterday(
 
 if __name__ == "__main__":
     print("Updating WDVX Yesterday playlist")
-    ytmusic = YTMusic("headers_auth.json")
+    ytmusic = YTMusic("oauth.json")
     playlistId = "PLJpUfuX6t6dTz7hGKVztERi0YnE_azCg1"
     if UpdateWDVXYesterday(
         ytmusic=ytmusic,

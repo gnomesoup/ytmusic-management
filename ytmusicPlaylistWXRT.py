@@ -14,7 +14,7 @@ url = (
     + "%2F"
     + year
 )
-ytmusic = YTMusic("headers_auth.json")
+ytmusic = YTMusic("oauth.json")
 playlistTitle = "WXRT Playlist from " + year + "-" + month.zfill(2) + "-" + day.zfill(2)
 playlistDescription = ""
 playlistPrivacyStatus = "PUBLIC"
