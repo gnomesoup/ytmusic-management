@@ -15,8 +15,6 @@ from ytmusicapi import YTMusic
 from ytmusicFunctions import GetSongId
 from ytmusicPlaylistDoubleYouMixAreShe import MixChicagoRadioStations
 from ytmusicPlaylistWDVX import UpdateWDVXYesterday
-from ytmusicPlaylistWXRTSaturdayMorningFlashback import CreateWXRTFlashback
-from ytmusicPlaylistCKPKyesterday import UpdateCKPKYesterday
 from ytmusicPlaylistWKLQyesterday import UpdateWKLQYesterday
 from ytmusicPlaylistWXRTyesterday import UpdateWXRTYesterday
 from ytmusicPlaylistWSHEyesterday import UpdateWSHEYesterday
