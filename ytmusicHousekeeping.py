@@ -193,7 +193,7 @@ def YTMusicScrobble(ytmusic: YTMusic, connectionString: str, user: str) -> None:
 
 if __name__ == "__main__":
     print("YouTube Music Housekeeping")
-    # chdir("/ytmusic")
+    chdir("/ytmusic")
     ytmusic = None
     while not ytmusic:
         try:
